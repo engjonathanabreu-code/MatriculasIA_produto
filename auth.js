@@ -34,6 +34,19 @@
     el.textContent = msg;
     el.hidden = false;
   }
+
+  function mostrarErroAuthComAcao(msg, textoBotao, aoClicar) {
+    var el = document.getElementById("auth-error");
+    el.innerHTML = "";
+    el.appendChild(document.createTextNode(msg + " "));
+    var botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "auth-error-action";
+    botao.textContent = textoBotao;
+    botao.addEventListener("click", aoClicar);
+    el.appendChild(botao);
+    el.hidden = false;
+  }
   function esconderErroAuth() {
     var el = document.getElementById("auth-error");
     el.hidden = true;
@@ -83,13 +96,22 @@
         if (state.modo === "cadastrar") {
           var { error } = await window.supabaseClient.auth.signUp({ email: email, password: senha });
           if (error) throw error;
-          mostrarErroAuth("Conta criada! Verifique seu e-mail para confirmar (ou entre diretamente se a confirmacao estiver desativada).");
+          mostrarErroAuth("Conta criada! Se a confirmacao de e-mail estiver ativada, verifique sua caixa de entrada antes de entrar.");
         } else {
           var resp = await window.supabaseClient.auth.signInWithPassword({ email: email, password: senha });
           if (resp.error) throw resp.error;
         }
       } catch (err) {
-        mostrarErroAuth(traduzErroAuth(err.message));
+        var msgTraduzida = traduzErroAuth(err && err.message ? err.message : String(err));
+        if (msgTraduzida === "EMAIL_NAO_CONFIRMADO") {
+          mostrarErroAuthComAcao(
+            "Este e-mail ainda nao foi confirmado.",
+            "Reenviar e-mail de confirmacao",
+            function () { reenviarConfirmacao(email); }
+          );
+        } else {
+          mostrarErroAuth(msgTraduzida || "Erro inesperado ao autenticar. Tente novamente.");
+        }
       } finally {
         btn.disabled = false;
       }
@@ -109,7 +131,17 @@
     if (/invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos.";
     if (/user already registered/i.test(msg)) return "Ja existe uma conta com esse e-mail. Tente entrar.";
     if (/password.*at least/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
+    if (/email not confirmed/i.test(msg)) return "EMAIL_NAO_CONFIRMADO";
     return msg;
+  }
+
+  async function reenviarConfirmacao(email) {
+    try {
+      await window.supabaseClient.auth.resend({ type: "signup", email: email });
+      mostrarErroAuth("E-mail de confirmacao reenviado. Confira sua caixa de entrada (e o spam).");
+    } catch (e) {
+      mostrarErroAuth("Nao foi possivel reenviar o e-mail: " + e.message);
+    }
   }
 
   function mostrarGateDeAuth() {
