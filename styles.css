@@ -926,6 +926,7 @@ button, input{ font-family: inherit; }
   z-index: 1000;
   padding: 20px;
 }
+.auth-gate[hidden]{ display: none; }
 .auth-card{
   width: 100%;
   max-width: 380px;
