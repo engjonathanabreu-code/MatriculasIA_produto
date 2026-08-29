@@ -289,7 +289,9 @@
         '<div class="fila-item-info"><div>' +
         '<div class="fila-item-name">' + esc(item.file.name) + "</div>" +
         '<div class="fila-item-meta">' + (item.file.size / 1000).toFixed(0) + " KB" +
-        (item.erro ? " · " + esc(item.erro) : "") + "</div>" +
+        (item.erro ? " · " + esc(item.erro) : "") +
+        (item.precisaUpgrade ? ' <button class="btn-icon-text" data-ir-minha-conta="1" style="color:var(--accent);font-weight:700;">Ver planos →</button>' : "") +
+        "</div>" +
         "</div></div>" +
         '<span class="fila-item-status fila-item-status--' + item.status + '">' + FILA_STATUS_LABEL[item.status] + "</span>" +
         (item.status === "pendente"
@@ -298,6 +300,10 @@
         "</div>"
       );
     }).join("");
+
+    lista.querySelectorAll("[data-ir-minha-conta]").forEach(function (btn) {
+      btn.addEventListener("click", function () { goToView("conta"); });
+    });
 
     lista.querySelectorAll("[data-remove-fila]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -416,6 +422,7 @@
       } catch (err) {
         item.status = "erro";
         item.erro = (err && err.message) || "Falha ao analisar.";
+        item.precisaUpgrade = !!(err && err.precisaUpgrade);
         renderProgressSteps(null, 0, 1);
       }
       renderFilaArquivos();
@@ -470,7 +477,9 @@
 
     var json = await resp.json();
     if (!resp.ok || !json.sucesso) {
-      throw new Error((json && json.erro) || "Falha ao analisar o documento.");
+      var erroApi = new Error((json && json.erro) || "Falha ao analisar o documento.");
+      erroApi.precisaUpgrade = !!(json && (json.precisaAssinatura || json.limiteAtingido));
+      throw erroApi;
     }
 
     renderProgressSteps(3, 2, null);
