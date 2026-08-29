@@ -106,6 +106,18 @@ async function sincronizarAssinatura(admin, stripe, stripeSubscriptionIdOuObjeto
     atualizado_em: new Date().toISOString()
   };
 
+  // Se essa assinatura ficou ativa, desativa qualquer outra assinatura ativa
+  // do mesmo usuario que nao seja do Stripe (ex: o teste gratuito) - evita
+  // duas assinaturas "active" simultaneas para a mesma pessoa.
+  if (registro.status === "active") {
+    await admin
+      .from("subscriptions")
+      .update({ status: "superseded", atualizado_em: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .is("stripe_subscription_id", null);
+  }
+
   await admin.from("subscriptions").upsert(registro, { onConflict: "stripe_subscription_id" });
 }
 
