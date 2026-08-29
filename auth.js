@@ -61,6 +61,7 @@
     if (state.turnstileWidgetId != null) return; // ja renderizado
     state.turnstileWidgetId = turnstile.render("#turnstile-widget", {
       sitekey: TURNSTILE_SITE_KEY,
+      appearance: "interaction-only",
       callback: function (token) { state.turnstileToken = token; },
       "expired-callback": function () { state.turnstileToken = null; }
     });
