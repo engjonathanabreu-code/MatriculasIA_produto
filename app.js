@@ -233,10 +233,18 @@
     el.textContent = msg;
   }
 
+  var MAX_ARQUIVOS_POR_LOTE = 10;
+
   function handleFilesSelected(fileList) {
     hideUploadError();
     var erros = [];
+    var jaNaFila = state.filaUpload.length;
+
     Array.prototype.forEach.call(fileList, function (file) {
+      if (jaNaFila >= MAX_ARQUIVOS_POR_LOTE) {
+        erros.push(file.name + ": limite de " + MAX_ARQUIVOS_POR_LOTE + " documentos por lote atingido, nao adicionado.");
+        return;
+      }
       var ext = file.name.split(".").pop().toLowerCase();
       var typeOk =
         ALLOWED_TYPES.indexOf(file.type) !== -1 ||
@@ -255,6 +263,7 @@
         status: "pendente",
         erro: null
       });
+      jaNaFila++;
     });
     if (erros.length) showUploadError(erros.join(" "));
     renderFilaArquivos();
