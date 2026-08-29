@@ -81,6 +81,13 @@
         esconderErroAuth();
       });
     });
+
+    // Quem chega da landing page com um plano escolhido (?plano=basico/pro/expert/trial)
+    // provavelmente ainda nao tem conta - abre direto na aba de cadastro.
+    if (new URLSearchParams(window.location.search).get("plano")) {
+      var tabCadastrar = document.querySelector('.auth-tab[data-auth-tab="cadastrar"]');
+      if (tabCadastrar) tabCadastrar.click();
+    }
   }
 
   function initAuthForm() {
@@ -284,6 +291,10 @@
     initBotoesDePlanos();
     initLogout();
 
+    // Plano escolhido na landing page (index.html?plano=basico|pro|expert|trial),
+    // capturado uma unica vez ao carregar a pagina.
+    var planoDesejado = new URLSearchParams(window.location.search).get("plano");
+
     window.supabaseClient.auth.onAuthStateChange(function (event, session) {
       state.session = session;
       if (session) {
@@ -291,6 +302,20 @@
         carregarDadosDaConta();
         if (typeof window.__iniciarAppPrincipal === "function") {
           window.__iniciarAppPrincipal(session);
+        }
+
+        // So redireciona automaticamente para o checkout em um login/cadastro
+        // FRESCO desta sessao de navegador (evento SIGNED_IN), nunca ao apenas
+        // restaurar uma sessao ja existente (INITIAL_SESSION) - senao o
+        // usuario seria jogado pro Stripe toda vez que so recarregasse a pagina.
+        if (event === "SIGNED_IN" && planoDesejado && ["basico", "pro", "expert"].indexOf(planoDesejado) !== -1) {
+          var planoParaAssinar = planoDesejado;
+          planoDesejado = null; // consome uma unica vez
+          chamarApiComAuth("/api/create-checkout-session", { planId: planoParaAssinar })
+            .then(function (json) { window.location.href = json.url; })
+            .catch(function (err) {
+              mostrarErroAuth("Nao foi possivel iniciar a assinatura do plano " + planoParaAssinar + ": " + err.message);
+            });
         }
       } else {
         mostrarGateDeAuth();
