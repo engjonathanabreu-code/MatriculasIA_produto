@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR" translate="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="google" content="notranslate" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matrícula.IA — Análise geométrica de matrículas com IA</title>
+<meta name="description" content="Analise matrículas imobiliárias e memoriais descritivos com IA + geoprocessamento determinístico. Poligonal, área, perímetro e mapa em minutos." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231d4ed8'/%3E%3Cpath d='M5 15 L9 6 L18 8 L16 18 Z' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='15' r='1.4' fill='%23fff'/%3E%3Ccircle cx='9' cy='6' r='1.4' fill='%23fff'/%3E%3Ccircle cx='18' cy='8' r='1.4' fill='%23fff'/%3E%3Ccircle cx='16' cy='18' r='1.4' fill='%23fff'/%3E%3C/svg%3E" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="landing.css" />
+</head>
+<body class="notranslate" translate="no">
+
+<div class="lp-page">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="lp-header">
+    <div class="lp-header-inner">
+      <div class="lp-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 15 L9 6 L18 8 L16 18 Z" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="5" cy="15" r="1.4" fill="#fff"/>
+            <circle cx="9" cy="6" r="1.4" fill="#fff"/>
+            <circle cx="18" cy="8" r="1.4" fill="#fff"/>
+            <circle cx="16" cy="18" r="1.4" fill="#fff"/>
+          </svg>
+        </div>
+        <span class="lp-brand-name">Matrícula<span class="brand-accent-dark">.IA</span></span>
+      </div>
+      <nav class="lp-nav">
+        <a href="#recursos">Recursos</a>
+        <a href="#limitacoes">Limitações</a>
+        <a href="#precos">Preços</a>
+      </nav>
+      <a href="app.html" class="btn btn-secondary lp-nav-entrar">Entrar</a>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="lp-hero">
+    <div class="lp-hero-inner">
+      <span class="lp-eyebrow">IA + geoprocessamento determinístico</span>
+      <h1>Transforme matrículas em poligonais, área e mapa — em minutos, não em horas</h1>
+      <p class="lp-hero-sub">
+        Envie o PDF ou a foto de uma matrícula ou memorial descritivo. A IA transcreve os dados;
+        um motor geométrico determinístico calcula poligonal, área, perímetro e desenha no mapa —
+        com auditoria completa de onde cada número veio.
+      </p>
+      <div class="lp-hero-cta">
+        <a href="app.html?plano=trial" class="btn btn-primary lp-cta-primary">Começar grátis · 2 análises</a>
+        <a href="#precos" class="btn btn-secondary">Ver planos</a>
+      </div>
+      <p class="lp-hero-footnote">Sem cartão de crédito para testar. Cancele quando quiser.</p>
+    </div>
+  </section>
+
+  <!-- ===================== RECURSOS ===================== -->
+  <section class="lp-section" id="recursos">
+    <h2 class="lp-section-title">O que o Matrícula.IA faz por você</h2>
+    <div class="lp-features-grid">
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">📄</div>
+        <h3>Leitura automática</h3>
+        <p>A IA identifica matrícula, proprietário, vértices, confrontantes, datum e histórico de registro — direto do PDF ou foto do documento.</p>
+      </div>
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">📐</div>
+        <h3>Geometria determinística</h3>
+        <p>Área, perímetro e poligonal são sempre calculados por fórmulas matemáticas verificáveis — a IA nunca "inventa" um número geométrico.</p>
+      </div>
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">🗺️</div>
+        <h3>Mapa multi-matrícula</h3>
+        <p>Organize várias matrículas relacionadas num mesmo projeto, cada uma com sua cor, sobrepostas no mesmo mapa.</p>
+      </div>
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">✅</div>
+        <h3>Validação e auditoria</h3>
+        <p>Cada vértice mostra o trecho exato do documento de onde veio. Divergências entre área registral e calculada são sinalizadas automaticamente.</p>
+      </div>
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">📤</div>
+        <h3>Exportação técnica</h3>
+        <p>GeoJSON, KML, CSV e relatório TXT — por matrícula ou do projeto inteiro de uma vez.</p>
+      </div>
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon">🔗</div>
+        <h3>Matrículas citadas</h3>
+        <p>Identifica automaticamente matrículas mencionadas como confrontantes ou histórico, ainda não analisadas no seu projeto.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LIMITACOES (transparencia) ===================== -->
+  <section class="lp-section lp-section--alt" id="limitacoes">
+    <h2 class="lp-section-title">O que o Matrícula.IA <em>não</em> faz</h2>
+    <p class="lp-section-sub">Preferimos ser diretos sobre os limites da ferramenta — isso é o que garante que você pode confiar nos números que ela entrega.</p>
+    <div class="lp-limits-grid">
+      <div class="lp-limit-item">
+        <strong>Não substitui um profissional habilitado.</strong>
+        <span>O resultado é um apoio técnico; a responsabilidade final por laudos e ART/RRT continua sendo do profissional.</span>
+      </div>
+      <div class="lp-limit-item">
+        <strong>Não adivinha dados ausentes do documento.</strong>
+        <span>Quando falta datum, zona UTM ou coordenada, o sistema pede confirmação humana em vez de supor um valor.</span>
+      </div>
+      <div class="lp-limit-item">
+        <strong>Depende da qualidade do documento.</strong>
+        <span>Digitalizações muito ruins, letra manuscrita ou memoriais incompletos reduzem a confiança da extração.</span>
+      </div>
+      <div class="lp-limit-item">
+        <strong>Não calcula geometria via IA.</strong>
+        <span>Isso é proposital: área, perímetro e poligonal vêm sempre de fórmulas determinísticas, nunca de estimativa da IA.</span>
+      </div>
+      <div class="lp-limit-item">
+        <strong>Limite de 10 documentos por lote.</strong>
+        <span>Cada envio de análise aceita até 10 arquivos distintos de uma vez, para manter a qualidade da leitura.</span>
+      </div>
+      <div class="lp-limit-item">
+        <strong>Uso sujeito ao limite do plano.</strong>
+        <span>Cada plano tem um número mensal de análises; ao atingir o limite, é necessário fazer upgrade ou aguardar a renovação.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRECOS ===================== -->
+  <section class="lp-section" id="precos">
+    <h2 class="lp-section-title">Planos simples, sem letra miúda</h2>
+    <p class="lp-section-sub">Comece grátis. Faça upgrade quando precisar de mais.</p>
+
+    <div class="lp-pricing-grid">
+      <div class="lp-price-card">
+        <h4>Teste grátis</h4>
+        <div class="lp-price">R$ 0</div>
+        <div class="lp-price-limit">2 análises, sem cartão</div>
+        <ul class="lp-price-features">
+          <li>Todos os recursos liberados</li>
+          <li>Até 10 documentos por lote</li>
+          <li>Sem compromisso</li>
+        </ul>
+        <a href="app.html?plano=trial" class="btn btn-secondary">Começar grátis</a>
+      </div>
+
+      <div class="lp-price-card">
+        <h4>Básico</h4>
+        <div class="lp-price">R$ 50<span>/mês</span></div>
+        <div class="lp-price-limit">10 análises por mês</div>
+        <ul class="lp-price-features">
+          <li>Todos os recursos liberados</li>
+          <li>Até 10 documentos por lote</li>
+          <li>Exportação GeoJSON, KML, CSV, TXT</li>
+        </ul>
+        <a href="app.html?plano=basico" class="btn btn-secondary">Assinar Básico</a>
+      </div>
+
+      <div class="lp-price-card lp-price-card--destaque">
+        <span class="plano-badge">Mais popular</span>
+        <h4>Pro</h4>
+        <div class="lp-price">R$ 100<span>/mês</span></div>
+        <div class="lp-price-limit">20 análises por mês</div>
+        <ul class="lp-price-features">
+          <li>Todos os recursos liberados</li>
+          <li>Até 10 documentos por lote</li>
+          <li>Exportação GeoJSON, KML, CSV, TXT</li>
+          <li>Suporte prioritário</li>
+        </ul>
+        <a href="app.html?plano=pro" class="btn btn-primary">Assinar Pro</a>
+      </div>
+
+      <div class="lp-price-card">
+        <h4>Expert</h4>
+        <div class="lp-price">R$ 250<span>/mês</span></div>
+        <div class="lp-price-limit">25 análises por mês</div>
+        <ul class="lp-price-features">
+          <li>Todos os recursos liberados</li>
+          <li>Até 10 documentos por lote</li>
+          <li>Exportação GeoJSON, KML, CSV, TXT</li>
+          <li>Suporte prioritário</li>
+        </ul>
+        <a href="app.html?plano=expert" class="btn btn-secondary">Assinar Expert</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="lp-footer">
+    <div class="footer-credit" style="align-items:center; text-align:center; border-top:none;">
+      <span class="footer-credit-company">Integral Soluções em Engenharia</span>
+      <span class="footer-credit-dev">Desenvolvido por Jonathan David de Abreu</span>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
