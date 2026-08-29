@@ -69,8 +69,8 @@ module.exports = async function handler(req, res) {
       client_reference_id: user.id,
       line_items: [{ price: plano.stripe_price_id, quantity: 1 }],
       subscription_data: { metadata: { supabase_user_id: user.id, plan_id: planId } },
-      success_url: appUrl + "/?checkout=sucesso",
-      cancel_url: appUrl + "/?checkout=cancelado",
+      success_url: appUrl + "/app.html?checkout=sucesso",
+      cancel_url: appUrl + "/app.html?checkout=cancelado",
       allow_promotion_codes: true
     });
 
