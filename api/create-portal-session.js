@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: perfil.stripe_customer_id,
-      return_url: appUrl + "/"
+      return_url: appUrl + "/app.html"
     });
 
     res.status(200).json({ sucesso: true, url: session.url });
