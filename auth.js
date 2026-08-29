@@ -216,21 +216,30 @@
     document.getElementById("conta-carregando").hidden = true;
     var semPlano = document.getElementById("conta-sem-plano");
     var comPlano = document.getElementById("conta-com-plano");
+    var btnGerenciar = document.getElementById("btn-gerenciar-assinatura");
+
+    // Sem nenhuma assinatura, ou so o teste gratuito (que nao passa pelo
+    // Stripe): mostra os planos para assinar. O teste gratuito tambem mostra
+    // o resumo de uso acima, mas sem o botao "gerenciar assinatura" (nao ha
+    // nada no Stripe para gerenciar ainda).
+    var ehTeste = assinatura && assinatura.plan_id === "trial";
 
     if (!assinatura) {
       semPlano.hidden = false;
       comPlano.hidden = true;
       return;
     }
-    semPlano.hidden = true;
+
     comPlano.hidden = false;
+    semPlano.hidden = !ehTeste;
+    btnGerenciar.hidden = ehTeste;
 
     document.getElementById("conta-plano-nome").textContent = assinatura.plans.nome;
     document.getElementById("conta-uso-atual").textContent = usoAtual + " / " + assinatura.plans.limite_analises;
     document.getElementById("conta-status").textContent = assinatura.status === "active" ? "Ativa" : assinatura.status;
     document.getElementById("conta-renovacao").textContent = assinatura.periodo_fim
       ? new Date(assinatura.periodo_fim).toLocaleDateString("pt-BR")
-      : "N/D";
+      : (ehTeste ? "Nao renova (uso unico)" : "N/D");
   }
 
   async function chamarApiComAuth(url, body) {
