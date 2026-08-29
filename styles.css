@@ -978,7 +978,7 @@ button, input{ font-family: inherit; }
 
 .auth-google-btn{ display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 
-.turnstile-wrap{ margin-top: 16px; display: flex; justify-content: center; }
+.turnstile-wrap{ display: flex; justify-content: center; min-height: 0; }
 
 .auth-footnote{ margin-top: 18px; font-size: 11px; line-height: 1.5; color: var(--text-muted); text-align: center; }
 
