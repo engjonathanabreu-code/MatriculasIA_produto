@@ -71,7 +71,17 @@
   border-radius: var(--radius-lg);
   padding: 26px;
 }
-.lp-feature-icon{ font-size: 26px; margin-bottom: 12px; }
+.lp-feature-icon{
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
 .lp-feature-card h3{ font-size: 16px; margin: 0 0 8px; }
 .lp-feature-card p{ font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; }
 
