@@ -145,13 +145,17 @@
   }
 
   function mostrarGateDeAuth() {
-    document.getElementById("auth-gate").hidden = false;
+    var gate = document.getElementById("auth-gate");
+    gate.hidden = false;
+    gate.style.display = "flex";
     document.querySelector(".app-shell").style.display = "none";
     renderTurnstile();
   }
 
   function esconderGateDeAuth() {
-    document.getElementById("auth-gate").hidden = true;
+    var gate = document.getElementById("auth-gate");
+    gate.hidden = true;
+    gate.style.display = "none";
     document.querySelector(".app-shell").style.display = "";
   }
 
