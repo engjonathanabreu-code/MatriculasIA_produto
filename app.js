@@ -254,6 +254,7 @@
     if (!el) return;
     _turnstileAnaliseWidgetId = turnstile.render(el, {
       sitekey: TURNSTILE_SITE_KEY_ANALISE,
+      appearance: "interaction-only",
       callback: function (token) { _turnstileAnaliseToken = token; },
       "expired-callback": function () { _turnstileAnaliseToken = null; }
     });
