@@ -235,6 +235,40 @@
 
   var MAX_ARQUIVOS_POR_LOTE = 10;
 
+  // ==========================================================================
+  // TURNSTILE (CAPTCHA) para a acao de analisar - token PROPRIO desta tela,
+  // gerado na hora, para nao reaproveitar (e correr risco de expirar) o token
+  // gerado la na tela de login/cadastro.
+  // ==========================================================================
+  var TURNSTILE_SITE_KEY_ANALISE = "0x4AAAAAAEhJ_ng8WKl9r9RD";
+  var _turnstileAnaliseWidgetId = null;
+  var _turnstileAnaliseToken = null;
+
+  function renderTurnstileAnalise() {
+    if (typeof turnstile === "undefined") {
+      setTimeout(renderTurnstileAnalise, 300);
+      return;
+    }
+    if (_turnstileAnaliseWidgetId != null) return;
+    var el = document.getElementById("turnstile-widget-analise");
+    if (!el) return;
+    _turnstileAnaliseWidgetId = turnstile.render(el, {
+      sitekey: TURNSTILE_SITE_KEY_ANALISE,
+      callback: function (token) { _turnstileAnaliseToken = token; },
+      "expired-callback": function () { _turnstileAnaliseToken = null; }
+    });
+  }
+
+  /** Consome o token atual e pede um novo na hora (Turnstile e de uso unico). */
+  function consumirTurnstileToken() {
+    var token = _turnstileAnaliseToken;
+    _turnstileAnaliseToken = null;
+    if (_turnstileAnaliseWidgetId != null && typeof turnstile !== "undefined") {
+      turnstile.reset(_turnstileAnaliseWidgetId);
+    }
+    return token;
+  }
+
   function handleFilesSelected(fileList) {
     hideUploadError();
     var erros = [];
@@ -468,7 +502,7 @@
           filename: file.name,
           mimeType: file.type || guessMimeFromName(file.name),
           blobUrl: blobUrl,
-          turnstileToken: window.__auth ? window.__auth.getTurnstileToken() : null
+          turnstileToken: consumirTurnstileToken()
         })
       }),
       290000,
@@ -2072,6 +2106,7 @@
     if (_appJaIniciado) return; // evita reinicializar em trocas de sessao/refresh de token
     _appJaIniciado = true;
 
+    renderTurnstileAnalise();
     state.projetos = loadProjetosFromStorage();
 
     var savedActive = null;
