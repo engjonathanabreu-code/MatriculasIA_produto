@@ -603,39 +603,54 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 403, { erro: "Verificacao de seguranca falhou (CAPTCHA). Recarregue a pagina e tente novamente." });
   }
 
+  // Contas de administrador/teste (definidas na variavel de ambiente ADMIN_EMAILS,
+  // separadas por virgula) pulam a checagem de plano/cota - uteis para o dono
+  // do sistema testar sem precisar passar pelo Stripe. Continuam autenticadas
+  // normalmente (login obrigatorio) e sujeitas ao CAPTCHA/rate limit acima.
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map(function (e) { return e.trim().toLowerCase(); })
+    .filter(Boolean);
+  const ehAdmin = adminEmails.indexOf((usuario.email || "").toLowerCase()) !== -1;
+
   const admin = getSupabaseAdmin();
-  const { data: assinatura } = await admin
-    .from("subscriptions")
-    .select("*, plans(*)")
-    .eq("user_id", usuario.id)
-    .eq("status", "active")
-    .order("criado_em", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let assinatura = null;
 
-  if (!assinatura) {
-    return sendJson(res, 402, {
-      erro: "Voce ainda nao tem um plano ativo. Assine um plano para analisar documentos.",
-      precisaAssinatura: true
-    });
-  }
+  if (!ehAdmin) {
+    const { data: assinaturaEncontrada } = await admin
+      .from("subscriptions")
+      .select("*, plans(*)")
+      .eq("user_id", usuario.id)
+      .eq("status", "active")
+      .order("criado_em", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    assinatura = assinaturaEncontrada;
 
-  const inicioPeriodo = assinatura.periodo_inicio || assinatura.criado_em;
-  const { count: usoNoPeriodo } = await admin
-    .from("analysis_usage")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", usuario.id)
-    .gte("criado_em", inicioPeriodo);
+    if (!assinatura) {
+      return sendJson(res, 402, {
+        erro: "Voce ainda nao tem um plano ativo. Assine um plano para analisar documentos.",
+        precisaAssinatura: true
+      });
+    }
 
-  const limitePlano = assinatura.plans ? assinatura.plans.limite_analises : 0;
-  if ((usoNoPeriodo || 0) >= limitePlano) {
-    return sendJson(res, 402, {
-      erro:
-        "Voce atingiu o limite de " + limitePlano + " analises do seu plano (" +
-        (assinatura.plans ? assinatura.plans.nome : "") + ") neste periodo. " +
+    const inicioPeriodo = assinatura.periodo_inicio || assinatura.criado_em;
+    const { count: usoNoPeriodo } = await admin
+      .from("analysis_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", usuario.id)
+      .gte("criado_em", inicioPeriodo);
+
+    const limitePlano = assinatura.plans ? assinatura.plans.limite_analises : 0;
+    if ((usoNoPeriodo || 0) >= limitePlano) {
+      return sendJson(res, 402, {
+        erro:
+          "Voce atingiu o limite de " + limitePlano + " analises do seu plano (" +
+          (assinatura.plans ? assinatura.plans.nome : "") + ") neste periodo. " +
         "Faca upgrade de plano ou aguarde a renovacao.",
-      limiteAtingido: true
-    });
+        limiteAtingido: true
+      });
+    }
   }
 
   const model = process.env.CLAUDE_MODEL || DEFAULT_MODEL;
@@ -665,7 +680,7 @@ module.exports = async function handler(req, res) {
           : null;
       await admin.from("analysis_usage").insert({
         user_id: usuario.id,
-        subscription_id: assinatura.id,
+        subscription_id: assinatura ? assinatura.id : null,
         matricula_numero: numeroMatricula,
         sucesso: true
       });
