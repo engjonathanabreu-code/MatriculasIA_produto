@@ -244,6 +244,8 @@
   var _turnstileAnaliseWidgetId = null;
   var _turnstileAnaliseToken = null;
 
+  var _turnstileAguardando = null; // callback chamado quando um novo token chegar
+
   function renderTurnstileAnalise() {
     if (typeof turnstile === "undefined") {
       setTimeout(renderTurnstileAnalise, 300);
@@ -255,19 +257,60 @@
     _turnstileAnaliseWidgetId = turnstile.render(el, {
       sitekey: TURNSTILE_SITE_KEY_ANALISE,
       appearance: "interaction-only",
-      callback: function (token) { _turnstileAnaliseToken = token; },
+      callback: function (token) {
+        _turnstileAnaliseToken = token;
+        if (_turnstileAguardando) {
+          var resolve = _turnstileAguardando;
+          _turnstileAguardando = null;
+          _turnstileAnaliseToken = null; // ja foi entregue para quem esperava - nao fica em cache para reuso indevido
+          resolve(token);
+        }
+      },
       "expired-callback": function () { _turnstileAnaliseToken = null; }
     });
   }
 
-  /** Consome o token atual e pede um novo na hora (Turnstile e de uso unico). */
-  function consumirTurnstileToken() {
-    var token = _turnstileAnaliseToken;
-    _turnstileAnaliseToken = null;
-    if (_turnstileAnaliseWidgetId != null && typeof turnstile !== "undefined") {
+  /**
+   * Devolve um token de seguranca valido, ESPERANDO de verdade um novo ser
+   * gerado se necessario (nao apenas o que estiver em cache no momento).
+   * Isso evita a corrida em lotes com varios documentos: cada analise
+   * consome um token e so avanca para a proxima quando o Cloudflare ja
+   * tiver entregue um token novo, em vez de mandar null por pressa.
+   */
+  function obterTurnstileTokenFresco() {
+    return new Promise(function (resolve) {
+      if (typeof turnstile === "undefined" || _turnstileAnaliseWidgetId == null) {
+        resolve(null); // Turnstile nao carregou - o backend decide o que fazer (ex: sem chave configurada, so avisa)
+        return;
+      }
+
+      if (_turnstileAnaliseToken) {
+        var tokenPronto = _turnstileAnaliseToken;
+        _turnstileAnaliseToken = null;
+        turnstile.reset(_turnstileAnaliseWidgetId); // ja pede o proximo, para quando for preciso de novo
+        resolve(tokenPronto);
+        return;
+      }
+
+      // Sem token em cache: espera o callback do widget entregar um novo,
+      // com um limite de tempo para nao travar a analise para sempre.
+      var jaResolveu = false;
+      var tempoEsgotado = setTimeout(function () {
+        if (jaResolveu) return;
+        jaResolveu = true;
+        _turnstileAguardando = null;
+        resolve(null);
+      }, 8000);
+
+      _turnstileAguardando = function (token) {
+        if (jaResolveu) return;
+        jaResolveu = true;
+        clearTimeout(tempoEsgotado);
+        resolve(token);
+      };
+
       turnstile.reset(_turnstileAnaliseWidgetId);
-    }
-    return token;
+    });
   }
 
   function handleFilesSelected(fileList) {
@@ -482,13 +525,19 @@
 
   /** Analisa UM arquivo e devolve o "documento" ja adicionado ao projeto. Lanca erro em caso de falha. */
   async function analisarUmArquivo(file, project) {
-    var blobUrl = await withTimeout(
+    // Busca o token do CAPTCHA em paralelo com o upload do arquivo (nao serializa
+    // um atras do outro - o token normalmente fica pronto antes do upload acabar).
+    var uploadPromise = withTimeout(
       uploadToBlob(file, function (progress) {
         setStatusPill("processing", "Enviando " + file.name + "... " + Math.round(progress.percentage) + "%");
       }),
       120000,
       "O envio do arquivo demorou demais e foi cancelado (mais de 2 minutos). Verifique sua conexao e tente novamente."
     );
+    var turnstileTokenPromise = obterTurnstileTokenFresco();
+
+    var blobUrl = await uploadPromise;
+    var turnstileToken = await turnstileTokenPromise;
 
     renderProgressSteps(1, 0, null);
 
@@ -503,7 +552,7 @@
           filename: file.name,
           mimeType: file.type || guessMimeFromName(file.name),
           blobUrl: blobUrl,
-          turnstileToken: consumirTurnstileToken()
+          turnstileToken: turnstileToken
         })
       }),
       290000,
