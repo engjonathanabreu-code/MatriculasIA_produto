@@ -71,6 +71,14 @@
     return state.turnstileToken;
   }
 
+  function atualizarCamposCadastro(modo) {
+    var wrap = document.getElementById("campos-cadastro");
+    var ehCadastro = modo === "cadastrar";
+    wrap.hidden = !ehCadastro;
+    document.getElementById("auth-cpf").required = ehCadastro;
+    document.getElementById("auth-telefone").required = ehCadastro;
+  }
+
   function initAuthTabs() {
     var tabs = document.querySelectorAll(".auth-tab");
     tabs.forEach(function (tab) {
@@ -79,6 +87,7 @@
         tab.classList.add("active");
         state.modo = tab.dataset.authTab;
         document.getElementById("btn-auth-submit").textContent = state.modo === "cadastrar" ? "Criar conta" : "Entrar";
+        atualizarCamposCadastro(state.modo);
         esconderErroAuth();
       });
     });
@@ -89,6 +98,40 @@
       var tabCadastrar = document.querySelector('.auth-tab[data-auth-tab="cadastrar"]');
       if (tabCadastrar) tabCadastrar.click();
     }
+  }
+
+  function initMascarasCadastro() {
+    var cpfInput = document.getElementById("auth-cpf");
+    cpfInput.addEventListener("input", function () {
+      var v = cpfInput.value.replace(/\D/g, "").slice(0, 11);
+      v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      cpfInput.value = v;
+    });
+
+    var telInput = document.getElementById("auth-telefone");
+    telInput.addEventListener("input", function () {
+      var v = telInput.value.replace(/\D/g, "").slice(0, 11);
+      if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+      else if (v.length > 5) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+      else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+      telInput.value = v;
+    });
+  }
+
+  /** Validacao real de CPF (digitos verificadores) - nao aceita qualquer sequencia de 11 numeros. */
+  function cpfValido(cpfFormatado) {
+    var cpf = String(cpfFormatado || "").replace(/\D/g, "");
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    var soma = 0, resto;
+    for (var i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i), 10) * (11 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.substring(9, 10), 10)) return false;
+    soma = 0;
+    for (i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i), 10) * (12 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    return resto === parseInt(cpf.substring(10, 11), 10);
   }
 
   function initAuthForm() {
@@ -103,10 +146,27 @@
       try {
         var captchaToken = getTurnstileToken();
         if (state.modo === "cadastrar") {
+          var cpf = document.getElementById("auth-cpf").value.trim();
+          var telefone = document.getElementById("auth-telefone").value.trim();
+
+          if (!cpfValido(cpf)) {
+            mostrarErroAuth("CPF invalido. Confira os numeros digitados.");
+            btn.disabled = false;
+            return;
+          }
+          if (telefone.replace(/\D/g, "").length < 10) {
+            mostrarErroAuth("Telefone invalido. Informe DDD + numero.");
+            btn.disabled = false;
+            return;
+          }
+
+          var optionsCadastro = { data: { cpf: cpf, telefone: telefone } };
+          if (captchaToken) optionsCadastro.captchaToken = captchaToken;
+
           var { error } = await window.supabaseClient.auth.signUp({
             email: email,
             password: senha,
-            options: captchaToken ? { captchaToken: captchaToken } : undefined
+            options: optionsCadastro
           });
           if (error) throw error;
           mostrarErroAuth("Conta criada! Se a confirmacao de e-mail estiver ativada, verifique sua caixa de entrada antes de entrar.");
@@ -135,15 +195,6 @@
           turnstile.reset(state.turnstileWidgetId);
         }
       }
-    });
-
-    document.getElementById("btn-auth-google").addEventListener("click", async function () {
-      esconderErroAuth();
-      var { error } = await window.supabaseClient.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin }
-      });
-      if (error) mostrarErroAuth(traduzErroAuth(error.message));
     });
   }
 
@@ -310,6 +361,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     initAuthTabs();
     initAuthForm();
+    initMascarasCadastro();
     initBotoesDePlanos();
     initLogout();
 
