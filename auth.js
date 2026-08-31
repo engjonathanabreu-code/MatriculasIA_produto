@@ -73,10 +73,13 @@
 
   function atualizarCamposCadastro(modo) {
     var wrap = document.getElementById("campos-cadastro");
+    var campoTermos = document.getElementById("campo-aceite-termos");
     var ehCadastro = modo === "cadastrar";
     wrap.hidden = !ehCadastro;
+    campoTermos.hidden = !ehCadastro;
     document.getElementById("auth-cpf").required = ehCadastro;
     document.getElementById("auth-telefone").required = ehCadastro;
+    document.getElementById("auth-aceite-termos").checked = false;
   }
 
   function initAuthTabs() {
@@ -159,8 +162,13 @@
             btn.disabled = false;
             return;
           }
+          if (!document.getElementById("auth-aceite-termos").checked) {
+            mostrarErroAuth("E preciso aceitar os Termos de Uso para criar a conta.");
+            btn.disabled = false;
+            return;
+          }
 
-          var optionsCadastro = { data: { cpf: cpf, telefone: telefone } };
+          var optionsCadastro = { data: { cpf: cpf, telefone: telefone, termos_aceitos_em: new Date().toISOString() } };
           if (captchaToken) optionsCadastro.captchaToken = captchaToken;
 
           var { error } = await window.supabaseClient.auth.signUp({
