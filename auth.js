@@ -76,7 +76,9 @@
     var campoTermos = document.getElementById("campo-aceite-termos");
     var ehCadastro = modo === "cadastrar";
     wrap.hidden = !ehCadastro;
+    wrap.style.display = ehCadastro ? "flex" : "none";
     campoTermos.hidden = !ehCadastro;
+    campoTermos.style.display = ehCadastro ? "flex" : "none";
     document.getElementById("auth-cpf").required = ehCadastro;
     document.getElementById("auth-telefone").required = ehCadastro;
     document.getElementById("auth-aceite-termos").checked = false;
