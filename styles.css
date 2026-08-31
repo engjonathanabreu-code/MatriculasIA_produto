@@ -1068,3 +1068,5 @@ button, input{ font-family: inherit; }
 .doc-cor-picker::-webkit-color-swatch-wrapper{ padding: 0; }
 .doc-cor-picker::-webkit-color-swatch{ border: none; border-radius: 50%; }
 .doc-cor-picker::-moz-color-swatch{ border: none; border-radius: 50%; }
+
+.campos-cadastro{ display: flex; flex-direction: column; gap: 14px; }
