@@ -497,13 +497,23 @@ async function callClaude(apiKey, model, filename, mimeType, blobUrl) {
 
   let anthropicRes;
   try {
+    var headers = {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION
+    };
+    // Chaves de API "identity-linked" (pessoais ou de service account) que
+    // atuam em mais de um workspace exigem informar em qual workspace a
+    // chamada deve rodar. Configure ANTHROPIC_WORKSPACE_ID nas variaveis de
+    // ambiente da Vercel com o ID (comeca com "wrkspc_") do workspace onde
+    // a chave foi criada - encontrado em console.anthropic.com > Settings >
+    // Workspaces. Chaves antigas de workspace unico nao precisam disso.
+    if (process.env.ANTHROPIC_WORKSPACE_ID) {
+      headers["anthropic-workspace-id"] = process.env.ANTHROPIC_WORKSPACE_ID;
+    }
     anthropicRes = await fetch(ANTHROPIC_URL, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": ANTHROPIC_VERSION
-      },
+      headers: headers,
       body: JSON.stringify(anthropicPayload)
     });
   } catch (err) {
@@ -556,7 +566,7 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 400, { erro: "Corpo da requisicao ausente." });
   }
 
-  const { filename, mimeType, blobUrl, turnstileToken } = body;
+  const { filename, mimeType, blobUrl } = body;
 
   if (!filename || !mimeType || !blobUrl) {
     return sendJson(res, 400, {
@@ -578,11 +588,14 @@ module.exports = async function handler(req, res) {
   }
 
   // =========================================================================
-  // PROTECAO: autenticacao + CAPTCHA + rate limit + cota do plano
+  // PROTECAO: autenticacao + rate limit + cota do plano
+  // O CAPTCHA e verificado uma unica vez por LOTE, em /api/verify-captcha,
+  // antes do navegador comecar a chamar esta rota - nao a cada arquivo (um
+  // token do Turnstile so pode ser usado uma vez, entao pedir de novo aqui
+  // quebraria lotes com mais de um documento).
   // Tudo isso roda ANTES de chamar a IA (que custa dinheiro por chamada).
   // =========================================================================
   const { getClientIp, checarRateLimit } = require("../server/rateLimit");
-  const { verificarTurnstile } = require("../server/turnstile");
   const { getSupabaseAdmin, getAuthenticatedUser } = require("../server/supabaseAdmin");
 
   let usuario;
@@ -596,11 +609,6 @@ module.exports = async function handler(req, res) {
   const limiteIp = await checarRateLimit(req, "analisar-documento", 15, 15 * 60 * 1000);
   if (!limiteIp.permitido) {
     return sendJson(res, 429, { erro: "Muitas analises em pouco tempo deste endereco. Aguarde alguns minutos." });
-  }
-
-  const captchaOk = await verificarTurnstile(turnstileToken, ip);
-  if (!captchaOk) {
-    return sendJson(res, 403, { erro: "Verificacao de seguranca falhou (CAPTCHA). Recarregue a pagina e tente novamente." });
   }
 
   // Contas de administrador/teste (definidas na variavel de ambiente ADMIN_EMAILS,
