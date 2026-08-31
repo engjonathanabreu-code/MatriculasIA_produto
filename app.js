@@ -7,9 +7,10 @@
  *   - Um PROJETO agrupa varias matriculas relacionadas (documentos).
  *   - Cada DOCUMENTO e uma matricula/memorial ja analisado, com sua propria
  *     cor no mapa, vertices, geometria calculada e validacoes.
- *   - Projetos sao persistidos no localStorage do navegador (sem servidor,
- *     sem banco de dados - ninguem mais ve isso alem de quem usa este
- *     navegador/computador).
+ *   - Projetos sao persistidos no banco de dados (Supabase), associados ao
+ *     usuario logado - sincronizados entre qualquer dispositivo onde a
+ *     mesma conta fizer login. O localStorage so guarda qual projeto estava
+ *     ativo por ultimo (conveniencia local, nao e dado critico).
  *
  * Fluxo por documento:
  *   1. Upload direto ao Vercel Blob (api/blob-upload.js)
@@ -47,8 +48,9 @@
     "#0891b2", "#65a30d", "#db2777", "#ea580c", "#4338ca"
   ];
 
-  var PROJECTS_KEY = "integral-geo-matricula:projetos";
+  var PROJECTS_KEY = "integral-geo-matricula:projetos"; // chave legada (versoes antigas, so localStorage) - usada so para migracao automatica
   var ACTIVE_PROJECT_KEY = "integral-geo-matricula:projeto-ativo";
+  var MIGRACAO_FEITA_KEY = "integral-geo-matricula:migracao-servidor-feita";
 
   /** Estado global da aplicacao (unica fonte de verdade). */
   var state = {
@@ -64,24 +66,107 @@
   };
 
   // ==========================================================================
-  // PERSISTENCIA DE PROJETOS (localStorage - sem servidor, sem banco)
+  // PERSISTENCIA DE PROJETOS - Supabase (sincronizado entre dispositivos)
+  // Cada usuario ve os mesmos projetos/matriculas em qualquer computador
+  // onde fizer login - os dados moram no banco, protegidos por RLS (cada
+  // um so acessa os proprios). O localStorage so guarda qual projeto estava
+  // ativo por ultimo, como conveniencia (nao e dado critico).
   // ==========================================================================
-  function loadProjetosFromStorage() {
-    try {
-      var raw = window.localStorage.getItem(PROJECTS_KEY);
-      var list = raw ? JSON.parse(raw) : [];
-      return Array.isArray(list) ? list : [];
-    } catch (e) {
+  function sb() { return window.supabaseClient; }
+
+  async function carregarProjetosDoServidor() {
+    var client = sb();
+    var { data: projetosRows, error: erroProjetos } = await client
+      .from("projetos")
+      .select("*")
+      .order("atualizado_em", { ascending: false });
+
+    if (erroProjetos) {
+      console.error("[sync] falha ao carregar projetos:", erroProjetos.message);
       return [];
     }
+
+    var { data: documentosRows, error: erroDocs } = await client.from("documentos").select("*");
+    if (erroDocs) console.error("[sync] falha ao carregar documentos:", erroDocs.message);
+
+    var docsPorProjeto = {};
+    (documentosRows || []).forEach(function (row) {
+      var doc = row.dados || {};
+      doc.id = row.id;
+      doc.nomeArquivo = row.nome_arquivo;
+      doc.cor = row.cor;
+      doc.dataAnalise = row.data_analise;
+      if (!docsPorProjeto[row.projeto_id]) docsPorProjeto[row.projeto_id] = [];
+      docsPorProjeto[row.projeto_id].push(doc);
+    });
+
+    return (projetosRows || []).map(function (p) {
+      var docs = (docsPorProjeto[p.id] || []).sort(function (a, b) {
+        return new Date(a.dataAnalise) - new Date(b.dataAnalise);
+      });
+      return { id: p.id, nome: p.nome, criadoEm: p.criado_em, atualizadoEm: p.atualizado_em, documentos: docs };
+    });
   }
 
-  function saveProjetos() {
-    try {
-      window.localStorage.setItem(PROJECTS_KEY, JSON.stringify(state.projetos));
-    } catch (e) {
-      // localStorage indisponivel/cheio: nao quebra o app, so nao persiste
+  async function criarProjetoNoServidor(id, nome) {
+    var client = sb();
+    var userResp = await client.auth.getUser();
+    var userId = userResp.data && userResp.data.user ? userResp.data.user.id : null;
+    if (!userId) return;
+    var { error } = await client.from("projetos").insert({ id: id, user_id: userId, nome: nome });
+    if (error) console.error("[sync] falha ao criar projeto:", error.message);
+  }
+
+  async function renomearProjetoNoServidor(id, nome) {
+    var { error } = await sb().from("projetos").update({ nome: nome, atualizado_em: new Date().toISOString() }).eq("id", id);
+    if (error) console.error("[sync] falha ao renomear projeto:", error.message);
+  }
+
+  async function tocarProjetoNoServidor(id) {
+    var { error } = await sb().from("projetos").update({ atualizado_em: new Date().toISOString() }).eq("id", id);
+    if (error) console.error("[sync] falha ao atualizar projeto:", error.message);
+  }
+
+  async function excluirProjetoNoServidor(id) {
+    var { error } = await sb().from("projetos").delete().eq("id", id);
+    if (error) console.error("[sync] falha ao excluir projeto:", error.message);
+  }
+
+  async function salvarDocumentoNoServidorAsync(projetoId, doc) {
+    var dados = {};
+    for (var k in doc) {
+      if (k === "id" || k === "nomeArquivo" || k === "cor" || k === "dataAnalise") continue;
+      dados[k] = doc[k];
     }
+    var { error } = await sb().from("documentos").upsert({
+      id: doc.id,
+      projeto_id: projetoId,
+      nome_arquivo: doc.nomeArquivo,
+      cor: doc.cor,
+      data_analise: doc.dataAnalise,
+      dados: dados
+    });
+    if (error) console.error("[sync] falha ao salvar documento:", error.message);
+  }
+
+  async function excluirDocumentoNoServidor(id) {
+    var { error } = await sb().from("documentos").delete().eq("id", id);
+    if (error) console.error("[sync] falha ao excluir documento:", error.message);
+  }
+
+  /**
+   * Salva um documento editado no servidor SEM bloquear a interface (a tela ja
+   * foi atualizada localmente antes desta chamada). Tambem toca o projeto para
+   * refletir a data de ultima atualizacao.
+   */
+  function salvarDocumentoAtualizado(doc) {
+    var project = getActiveProject();
+    if (!project) return;
+    project.atualizadoEm = new Date().toISOString();
+    salvarDocumentoNoServidorAsync(project.id, doc).catch(function (e) {
+      console.error("[sync] erro inesperado ao salvar documento:", e);
+    });
+    tocarProjetoNoServidor(project.id).catch(function () {});
   }
 
   function getActiveProject() {
@@ -107,7 +192,9 @@
     state.projetoAtivoId = project.id;
     state.documentoSelecionadoId = null;
     try { window.localStorage.setItem(ACTIVE_PROJECT_KEY, project.id); } catch (e) {}
-    saveProjetos();
+    criarProjetoNoServidor(project.id, project.nome).catch(function (e) {
+      console.error("[sync] erro inesperado ao criar projeto:", e);
+    });
     populateProjectSelect();
     return project;
   }
@@ -236,15 +323,15 @@
   var MAX_ARQUIVOS_POR_LOTE = 10;
 
   // ==========================================================================
-  // TURNSTILE (CAPTCHA) para a acao de analisar - token PROPRIO desta tela,
-  // gerado na hora, para nao reaproveitar (e correr risco de expirar) o token
-  // gerado la na tela de login/cadastro.
+  // TURNSTILE (CAPTCHA) - verificado UMA VEZ por lote de analise, nao por
+  // arquivo (um token do Turnstile so pode ser usado uma vez; pedir de novo
+  // a cada arquivo de um mesmo lote causava erro nos documentos depois do
+  // primeiro). A "prova de humano" e feita uma vez em /api/verify-captcha
+  // antes de comecar a processar a fila.
   // ==========================================================================
   var TURNSTILE_SITE_KEY_ANALISE = "0x4AAAAAAEhJ_ng8WKl9r9RD";
   var _turnstileAnaliseWidgetId = null;
   var _turnstileAnaliseToken = null;
-
-  var _turnstileAguardando = null; // callback chamado quando um novo token chegar
 
   function renderTurnstileAnalise() {
     if (typeof turnstile === "undefined") {
@@ -257,60 +344,48 @@
     _turnstileAnaliseWidgetId = turnstile.render(el, {
       sitekey: TURNSTILE_SITE_KEY_ANALISE,
       appearance: "interaction-only",
-      callback: function (token) {
-        _turnstileAnaliseToken = token;
-        if (_turnstileAguardando) {
-          var resolve = _turnstileAguardando;
-          _turnstileAguardando = null;
-          _turnstileAnaliseToken = null; // ja foi entregue para quem esperava - nao fica em cache para reuso indevido
-          resolve(token);
-        }
-      },
+      callback: function (token) { _turnstileAnaliseToken = token; },
       "expired-callback": function () { _turnstileAnaliseToken = null; }
     });
   }
 
-  /**
-   * Devolve um token de seguranca valido, ESPERANDO de verdade um novo ser
-   * gerado se necessario (nao apenas o que estiver em cache no momento).
-   * Isso evita a corrida em lotes com varios documentos: cada analise
-   * consome um token e so avanca para a proxima quando o Cloudflare ja
-   * tiver entregue um token novo, em vez de mandar null por pressa.
-   */
-  function obterTurnstileTokenFresco() {
+  /** Espera ate 8s por um token valido do widget (normalmente ja esta pronto). */
+  function aguardarTurnstileToken() {
     return new Promise(function (resolve) {
       if (typeof turnstile === "undefined" || _turnstileAnaliseWidgetId == null) {
-        resolve(null); // Turnstile nao carregou - o backend decide o que fazer (ex: sem chave configurada, so avisa)
-        return;
-      }
-
-      if (_turnstileAnaliseToken) {
-        var tokenPronto = _turnstileAnaliseToken;
-        _turnstileAnaliseToken = null;
-        turnstile.reset(_turnstileAnaliseWidgetId); // ja pede o proximo, para quando for preciso de novo
-        resolve(tokenPronto);
-        return;
-      }
-
-      // Sem token em cache: espera o callback do widget entregar um novo,
-      // com um limite de tempo para nao travar a analise para sempre.
-      var jaResolveu = false;
-      var tempoEsgotado = setTimeout(function () {
-        if (jaResolveu) return;
-        jaResolveu = true;
-        _turnstileAguardando = null;
         resolve(null);
-      }, 8000);
-
-      _turnstileAguardando = function (token) {
-        if (jaResolveu) return;
-        jaResolveu = true;
-        clearTimeout(tempoEsgotado);
-        resolve(token);
-      };
-
-      turnstile.reset(_turnstileAnaliseWidgetId);
+        return;
+      }
+      var tentativas = 0;
+      (function checar() {
+        if (_turnstileAnaliseToken) { resolve(_turnstileAnaliseToken); return; }
+        tentativas++;
+        if (tentativas > 40) { resolve(null); return; } // ~8s (40 x 200ms)
+        setTimeout(checar, 200);
+      })();
     });
+  }
+
+  /** Verifica o CAPTCHA uma unica vez no servidor, para todo o lote que vai comecar agora. */
+  async function verificarCaptchaDoLote() {
+    var token = await aguardarTurnstileToken();
+    var resp = await fetch("/api/verify-captcha", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + (window.__auth ? window.__auth.getAccessToken() : "")
+      },
+      body: JSON.stringify({ turnstileToken: token })
+    });
+    var json = await resp.json();
+    // token e de uso unico - pede um novo desde ja, para a proxima vez que for preciso
+    if (_turnstileAnaliseWidgetId != null && typeof turnstile !== "undefined") {
+      _turnstileAnaliseToken = null;
+      turnstile.reset(_turnstileAnaliseWidgetId);
+    }
+    if (!resp.ok || !json.sucesso) {
+      throw new Error(json.erro || "Verificacao de seguranca falhou.");
+    }
   }
 
   function handleFilesSelected(fileList) {
@@ -481,6 +556,15 @@
     document.getElementById("result-summary").hidden = true;
     hideUploadError();
 
+    try {
+      await verificarCaptchaDoLote();
+    } catch (err) {
+      state.processandoFila = false;
+      document.getElementById("btn-analisar").disabled = false;
+      showUploadError((err && err.message) || "Verificacao de seguranca falhou.");
+      return;
+    }
+
     for (var i = 0; i < pendentes.length; i++) {
       var item = pendentes[i];
       item.status = "processando";
@@ -525,19 +609,13 @@
 
   /** Analisa UM arquivo e devolve o "documento" ja adicionado ao projeto. Lanca erro em caso de falha. */
   async function analisarUmArquivo(file, project) {
-    // Busca o token do CAPTCHA em paralelo com o upload do arquivo (nao serializa
-    // um atras do outro - o token normalmente fica pronto antes do upload acabar).
-    var uploadPromise = withTimeout(
+    var blobUrl = await withTimeout(
       uploadToBlob(file, function (progress) {
         setStatusPill("processing", "Enviando " + file.name + "... " + Math.round(progress.percentage) + "%");
       }),
       120000,
       "O envio do arquivo demorou demais e foi cancelado (mais de 2 minutos). Verifique sua conexao e tente novamente."
     );
-    var turnstileTokenPromise = obterTurnstileTokenFresco();
-
-    var blobUrl = await uploadPromise;
-    var turnstileToken = await turnstileTokenPromise;
 
     renderProgressSteps(1, 0, null);
 
@@ -551,8 +629,7 @@
         body: JSON.stringify({
           filename: file.name,
           mimeType: file.type || guessMimeFromName(file.name),
-          blobUrl: blobUrl,
-          turnstileToken: turnstileToken
+          blobUrl: blobUrl
         })
       }),
       290000,
@@ -587,7 +664,8 @@
 
     project.documentos.push(doc);
     project.atualizadoEm = new Date().toISOString();
-    saveProjetos();
+    await salvarDocumentoNoServidorAsync(project.id, doc);
+    tocarProjetoNoServidor(project.id).catch(function () {});
 
     return doc;
   }
@@ -973,9 +1051,7 @@
     var doc = getSelectedDocument();
     if (!doc) return;
     computeDocumento(doc);
-    var project = getActiveProject();
-    if (project) project.atualizadoEm = new Date().toISOString();
-    saveProjetos();
+    salvarDocumentoAtualizado(doc);
     renderMap();
     renderTabelaEConfrontantes();
     renderValidacao();
@@ -1000,9 +1076,7 @@
     if (camposAlterados.zona) doc.sistemaManualCampos.zona = true;
     if (camposAlterados.hemisferio) doc.sistemaManualCampos.hemisferio = true;
     computeDocumento(doc);
-    var project = getActiveProject();
-    if (project) project.atualizadoEm = new Date().toISOString();
-    saveProjetos();
+    salvarDocumentoAtualizado(doc);
     state.formSistemaManualDocId = null;
     renderAllForActiveProject();
     renderProjetos();
@@ -1030,9 +1104,7 @@
       }
     });
     computeDocumento(doc);
-    var project = getActiveProject();
-    if (project) project.atualizadoEm = new Date().toISOString();
-    saveProjetos();
+    salvarDocumentoAtualizado(doc);
     renderAllForActiveProject();
     renderProjetos();
   }
@@ -1164,7 +1236,7 @@
 
     html += '<div class="card doc-header-card">';
     html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
-    html += '<span class="color-dot" style="background:' + doc.cor + ';width:14px;height:14px;"></span>';
+    html += '<input type="color" id="doc-cor-picker" class="doc-cor-picker" value="' + esc(doc.cor) + '" title="Clique para escolher a cor desta matricula no mapa" />';
     html += "<h2 style=\"margin:0;font-size:20px;\">Matricula " + esc(numero) + "</h2>";
     html += doc.situacaoMatricula && doc.situacaoMatricula.ativa === false
       ? '<span class="rs-badge rs-badge--warn">Substituida</span>'
@@ -1315,6 +1387,20 @@
 
     container.className = "";
     container.innerHTML = html;
+
+    var pickerCor = document.getElementById("doc-cor-picker");
+    if (pickerCor) {
+      pickerCor.addEventListener("input", function () {
+        doc.cor = pickerCor.value;
+        var project = getActiveProject();
+        if (project) project.atualizadoEm = new Date().toISOString();
+        salvarDocumentoAtualizado(doc);
+        renderMap();
+        renderDocSelector("dados-extraidos-seletor", renderDadosExtraidos);
+        renderTabelaEConfrontantes();
+        renderProjetos();
+      });
+    }
 
     var btnRemoverSistema = document.getElementById("btn-remover-sistema-manual");
     if (btnRemoverSistema) {
@@ -2017,7 +2103,8 @@
           project.documentos = project.documentos.filter(function (d) { return d.id !== id; });
           project.atualizadoEm = new Date().toISOString();
           if (state.documentoSelecionadoId === id) state.documentoSelecionadoId = null;
-          saveProjetos();
+          excluirDocumentoNoServidor(id).catch(function (e) { console.error("[sync] erro ao excluir documento:", e); });
+          tocarProjetoNoServidor(project.id).catch(function () {});
           renderProjetos();
           renderAllForActiveProject();
         });
@@ -2080,7 +2167,7 @@
       if (!novo) return;
       project.nome = novo.trim();
       project.atualizadoEm = new Date().toISOString();
-      saveProjetos();
+      renomearProjetoNoServidor(project.id, project.nome).catch(function (e) { console.error("[sync] erro ao renomear projeto:", e); });
       populateProjectSelect();
       renderProjetos();
     });
@@ -2092,7 +2179,7 @@
       state.projetos = state.projetos.filter(function (p) { return p.id !== project.id; });
       state.projetoAtivoId = state.projetos.length ? state.projetos[0].id : null;
       state.documentoSelecionadoId = null;
-      saveProjetos();
+      excluirProjetoNoServidor(project.id).catch(function (e) { console.error("[sync] erro ao excluir projeto:", e); });
       populateProjectSelect();
       renderProjetos();
       renderAllForActiveProject();
@@ -2151,13 +2238,54 @@
   // ==========================================================================
   // BOOT (chamado por auth.js SOMENTE depois de confirmada a sessao)
   // ==========================================================================
+  /**
+   * Migracao unica: esta conta pode ter projetos salvos so no localStorage de
+   * uma versao anterior do app (antes de existir sincronizacao com o
+   * servidor). Se o servidor ainda estiver vazio E existir esse dado antigo
+   * no navegador, sobe tudo para o servidor automaticamente, uma vez so.
+   */
+  async function migrarProjetosAntigosDoLocalStorageSeNecessario() {
+    if (state.projetos.length > 0) return; // ja tem dado no servidor, nao mexe em nada
+    try {
+      if (window.localStorage.getItem(MIGRACAO_FEITA_KEY) === "1") return;
+      var raw = window.localStorage.getItem(PROJECTS_KEY);
+      var antigos = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(antigos) || antigos.length === 0) {
+        window.localStorage.setItem(MIGRACAO_FEITA_KEY, "1");
+        return;
+      }
+
+      setStatusPill("processing", "Encontramos projetos salvos neste navegador - enviando para sua conta...");
+      for (var i = 0; i < antigos.length; i++) {
+        var p = antigos[i];
+        await criarProjetoNoServidor(p.id, p.nome);
+        for (var j = 0; j < (p.documentos || []).length; j++) {
+          await salvarDocumentoNoServidorAsync(p.id, p.documentos[j]);
+        }
+      }
+      state.projetos = await carregarProjetosDoServidor();
+      window.localStorage.setItem(MIGRACAO_FEITA_KEY, "1");
+    } catch (e) {
+      console.error("[sync] falha na migracao automatica de projetos antigos:", e);
+    }
+  }
+
   var _appJaIniciado = false;
-  function iniciarAppPrincipal() {
+  async function iniciarAppPrincipal() {
     if (_appJaIniciado) return; // evita reinicializar em trocas de sessao/refresh de token
     _appJaIniciado = true;
 
     renderTurnstileAnalise();
-    state.projetos = loadProjetosFromStorage();
+
+    setStatusPill("processing", "Carregando seus projetos...");
+    try {
+      state.projetos = await carregarProjetosDoServidor();
+    } catch (e) {
+      console.error("[sync] falha ao carregar projetos do servidor:", e);
+      state.projetos = [];
+    }
+
+    await migrarProjetosAntigosDoLocalStorageSeNecessario();
 
     var savedActive = null;
     try { savedActive = window.localStorage.getItem(ACTIVE_PROJECT_KEY); } catch (e) {}
@@ -2180,6 +2308,7 @@
 
     renderAllForActiveProject();
     renderProjetos();
+    setStatusPill("idle", "Aguardando documento");
   }
 
   window.IntegralApp = { goToView: goToView };
