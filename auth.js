@@ -74,14 +74,53 @@
   function atualizarCamposCadastro(modo) {
     var wrap = document.getElementById("campos-cadastro");
     var campoTermos = document.getElementById("campo-aceite-termos");
+    var forcaSenhaWrap = document.getElementById("forca-senha-wrap");
     var ehCadastro = modo === "cadastrar";
     wrap.hidden = !ehCadastro;
     wrap.style.display = ehCadastro ? "flex" : "none";
     campoTermos.hidden = !ehCadastro;
     campoTermos.style.display = ehCadastro ? "flex" : "none";
+    forcaSenhaWrap.hidden = !ehCadastro;
+    forcaSenhaWrap.style.display = ehCadastro ? "flex" : "none";
     document.getElementById("auth-cpf").required = ehCadastro;
     document.getElementById("auth-telefone").required = ehCadastro;
     document.getElementById("auth-aceite-termos").checked = false;
+  }
+
+  /** Estima a forca da senha (0-6) com base em criterios simples e comuns. */
+  function calcularForcaSenha(senha) {
+    var pontos = 0;
+    if (senha.length >= 8) pontos++;
+    if (senha.length >= 12) pontos++;
+    if (/[a-z]/.test(senha)) pontos++;
+    if (/[A-Z]/.test(senha)) pontos++;
+    if (/[0-9]/.test(senha)) pontos++;
+    if (/[^A-Za-z0-9]/.test(senha)) pontos++;
+    return pontos;
+  }
+
+  function atualizarMedidorSenha() {
+    var senha = document.getElementById("auth-senha").value;
+    var fill = document.getElementById("forca-senha-fill");
+    var texto = document.getElementById("forca-senha-texto");
+
+    if (!senha) {
+      fill.style.width = "0%";
+      texto.textContent = "";
+      return;
+    }
+
+    var pontos = calcularForcaSenha(senha);
+    var config;
+    if (pontos <= 2) config = { largura: "25%", cor: "var(--error)", texto: "Fraca - tente adicionar mais caracteres, numeros e simbolos" };
+    else if (pontos <= 3) config = { largura: "50%", cor: "#e08a1e", texto: "Razoavel - ja pode ser aceitavel, mas pode melhorar" };
+    else if (pontos <= 4) config = { largura: "75%", cor: "#2e7d32", texto: "Boa - senha aceitavel" };
+    else config = { largura: "100%", cor: "var(--ok)", texto: "Forte - otima senha" };
+
+    fill.style.width = config.largura;
+    fill.style.background = config.cor;
+    texto.textContent = config.texto;
+    texto.style.color = config.cor;
   }
 
   function initAuthTabs() {
@@ -121,6 +160,8 @@
       else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
       telInput.value = v;
     });
+
+    document.getElementById("auth-senha").addEventListener("input", atualizarMedidorSenha);
   }
 
   /** Validacao real de CPF (digitos verificadores) - nao aceita qualquer sequencia de 11 numeros. */
@@ -213,6 +254,9 @@
     if (/user already registered/i.test(msg)) return "Ja existe uma conta com esse e-mail. Tente entrar.";
     if (/password.*at least/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
     if (/email not confirmed/i.test(msg)) return "EMAIL_NAO_CONFIRMADO";
+    if (/password.*(known|weak|easy to guess|pwned|compromised|breach)/i.test(msg)) {
+      return "Essa senha e conhecida por ja ter vazado em outros sites e nao e segura. Escolha uma senha diferente, de preferencia unica.";
+    }
     return msg;
   }
 
