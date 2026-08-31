@@ -1070,6 +1070,7 @@ button, input{ font-family: inherit; }
 .doc-cor-picker::-moz-color-swatch{ border: none; border-radius: 50%; }
 
 .campos-cadastro{ display: flex; flex-direction: column; gap: 14px; }
+.campos-cadastro[hidden]{ display: none; }
 
 .auth-checkbox{
   display: flex;
@@ -1079,5 +1080,6 @@ button, input{ font-family: inherit; }
   color: var(--text-secondary);
   cursor: pointer;
 }
+.auth-checkbox[hidden]{ display: none; }
 .auth-checkbox input{ margin-top: 2px; flex-shrink: 0; }
 .auth-checkbox a{ color: var(--accent); text-decoration: underline; }
