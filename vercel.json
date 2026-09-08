@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "redirects": [
-    { "source": "/", "destination": "/pre-cadastro.html", "permanent": false }
-  ],
   "functions": {
     "api/analisar-documento.js": {
       "maxDuration": 300,
