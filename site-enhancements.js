@@ -63,4 +63,23 @@
       credit.innerHTML = original.replace(name, '<a class="footer-admin-link" href="site-admin.html" title="Acesso administrativo">'+name+'</a>');
     }
   }
+
+  const showcaseShots = Array.from(document.querySelectorAll('.maia-shot'));
+  if(showcaseShots.length){
+    fetch('assets/maia-showcase.jpg', { cache:'no-store' })
+      .then((response)=>{
+        if(!response.ok) throw new Error('Falha ao carregar a galeria do MAIA.');
+        return response.text();
+      })
+      .then((dataUri)=>{
+        const uri = (dataUri || '').trim();
+        if(!uri.startsWith('data:image/')) throw new Error('Arquivo da galeria inválido.');
+        showcaseShots.forEach((shot)=>{
+          shot.style.backgroundImage = `url("${uri}")`;
+        });
+      })
+      .catch((error)=>{
+        console.error('[MAIA showcase]', error);
+      });
+  }
 })();
