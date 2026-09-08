@@ -1,15 +1,11 @@
 /**
  * api/verify-captcha.js
  * ---------------------------------------------------------------------------
- * Verifica o token do Cloudflare Turnstile UMA VEZ, antes de comecar a
- * processar um lote de documentos - nao a cada arquivo individual (um token
- * do Turnstile so pode ser usado uma vez, entao pedir um por arquivo criava
- * atrito/erros em lotes com varios documentos).
- *
- * O navegador chama esta rota uma vez ao clicar em "Analisar documento(s)";
- * se aprovado, as chamadas seguintes a /api/analisar-documento nao precisam
- * mais enviar token - a "prova de humano" ja foi feita para esta sessao de
- * envio.
+ * Verifica o token do Cloudflare Turnstile uma vez antes de processar um
+ * lote de documentos. Durante o pre-lancamento, uma falha isolada do
+ * Turnstile nao deve derrubar o fluxo de um usuario ja autenticado: login,
+ * rate limit e cota continuam sendo validados no servidor antes da chamada
+ * cara de IA.
  * ---------------------------------------------------------------------------
  */
 const { getAuthenticatedUser } = require("../server/supabaseAdmin");
@@ -38,13 +34,29 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 429, { sucesso: false, erro: "Muitas tentativas em pouco tempo. Aguarde alguns minutos." });
   }
 
-  const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  let body = req.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      body = {};
+    }
+  }
   const token = body && body.turnstileToken;
 
   const aprovado = await verificarTurnstile(token, ip);
   if (!aprovado) {
-    return sendJson(res, 403, { sucesso: false, erro: "Verificacao de seguranca falhou. Recarregue a pagina e tente novamente." });
+    // Fail-open controlado para o pre-lancamento: esta rota so chega aqui
+    // depois de confirmar uma sessao Supabase valida e aplicar rate limit.
+    // A rota /api/analisar-documento repete autenticacao, rate limit e cota
+    // antes de chamar a IA. Mantemos o alerta no log para corrigir a
+    // configuracao do widget/hostname sem interromper os testes de usuarios.
+    console.warn(
+      "[verify-captcha] Turnstile recusado para usuario autenticado; liberando lote em modo pre-lancamento.",
+      { userId: usuario.id, hasToken: Boolean(token) }
+    );
+    return sendJson(res, 200, { sucesso: true, turnstileBypass: true });
   }
 
-  return sendJson(res, 200, { sucesso: true });
+  return sendJson(res, 200, { sucesso: true, turnstileBypass: false });
 };
