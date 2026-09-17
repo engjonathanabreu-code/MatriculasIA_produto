@@ -101,3 +101,26 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- =============================================================================
+-- Chamados de suporte (erros e sugestoes) abertos pelo app e lidos no Site ADM
+-- =============================================================================
+create table public.support_tickets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete set null,
+  user_email text,
+  user_nome text,
+  tipo text not null default 'erro' check (tipo in ('erro','sugestao','duvida','outro')),
+  titulo text not null check (char_length(titulo) between 3 and 150),
+  conteudo_html text not null,          -- HTML ja sanitizado no backend
+  conteudo_texto text,
+  status text not null default 'aberto' check (status in ('aberto','em_andamento','resolvido','fechado')),
+  pagina_origem text,
+  navegador text,
+  criado_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+create index idx_support_tickets_user on public.support_tickets(user_id, criado_em desc);
+create index idx_support_tickets_status on public.support_tickets(status, criado_em desc);
+alter table public.support_tickets enable row level security;
+-- sem policies: leitura/escrita apenas pelo backend (service_role)

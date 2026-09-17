@@ -16,6 +16,7 @@
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
 <link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="support.css" />
 </head>
 <body class="notranslate" translate="no">
 
@@ -137,6 +138,10 @@
         <div class="usage-bar"><div id="usage-bar-fill" class="usage-bar-fill"></div></div>
         <span id="usage-text" class="usage-text">0 / 0 analises</span>
       </div>
+      <button id="btn-suporte-sidebar" class="support-sidebar-btn" type="button" data-abrir-suporte>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4V6Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M8 9h8M8 12.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Chamado suporte
+      </button>
       <div class="project-switcher">
         <label class="project-switcher-label" for="seletor-projeto">Projeto ativo</label>
         <select id="seletor-projeto" class="project-select"></select>
@@ -402,9 +407,90 @@
           <button id="btn-gerenciar-assinatura" class="btn btn-secondary" type="button">Gerenciar assinatura / trocar de plano</button>
         </div>
       </div>
+
+      <div id="conta-suporte" class="card support-card">
+        <div class="support-card-head">
+          <div>
+            <h3>Suporte</h3>
+            <p class="citadas-sub">Encontrou um erro ou tem uma sugestão? Abra um chamado e acompanhe o andamento por aqui.</p>
+          </div>
+          <button class="btn btn-secondary support-open-btn" type="button" data-abrir-suporte>Abrir chamado</button>
+        </div>
+        <div id="support-my-list" class="support-my-list"><div class="support-empty">Nenhum chamado aberto ainda.</div></div>
+      </div>
     </section>
 
   </main>
+</div>
+
+<!-- ===================== CHAMADO DE SUPORTE (modal) ===================== -->
+<div id="support-modal" class="support-modal" hidden>
+  <div class="support-backdrop" data-fechar-suporte></div>
+  <div class="support-dialog" role="dialog" aria-modal="true" aria-labelledby="support-title">
+    <div class="support-dialog-head">
+      <div>
+        <h2 id="support-title">Chamado de suporte</h2>
+        <p>Relate um erro ou envie uma sugestão. Nossa equipe recebe e responde pelo seu e-mail.</p>
+      </div>
+      <button class="support-close" type="button" aria-label="Fechar" data-fechar-suporte>&times;</button>
+    </div>
+    <form id="support-form" class="support-form" novalidate>
+      <div class="support-types" role="radiogroup" aria-label="Tipo do chamado">
+        <label><input type="radio" name="support-tipo" value="erro" checked><span>Erro</span></label>
+        <label><input type="radio" name="support-tipo" value="sugestao"><span>Sugestão</span></label>
+        <label><input type="radio" name="support-tipo" value="duvida"><span>Dúvida</span></label>
+        <label><input type="radio" name="support-tipo" value="outro"><span>Outro</span></label>
+      </div>
+      <label class="support-label" for="support-titulo">Título</label>
+      <input id="support-titulo" class="support-input" type="text" maxlength="150" placeholder="Ex.: Poligonal não aparece no mapa" required>
+
+      <label class="support-label" for="support-editor">Descrição</label>
+      <div class="support-editor-wrap">
+        <div class="support-toolbar" role="toolbar" aria-label="Formatação do texto">
+          <select class="support-tool-select" data-cmd="formatBlock" title="Estilo do parágrafo" aria-label="Estilo do parágrafo">
+            <option value="">Estilo</option>
+            <option value="p">Parágrafo normal</option>
+            <option value="h2">Título</option>
+            <option value="h3">Subtítulo</option>
+            <option value="blockquote">Citação</option>
+          </select>
+          <select class="support-tool-select" data-cmd="fontSizePx" title="Tamanho da fonte" aria-label="Tamanho da fonte">
+            <option value="">Tamanho</option>
+            <option value="12px">Pequeno</option>
+            <option value="14px">Normal</option>
+            <option value="16px">Médio</option>
+            <option value="20px">Grande</option>
+            <option value="24px">Muito grande</option>
+          </select>
+          <span class="support-tool-sep"></span>
+          <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button>
+          <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button>
+          <span class="support-tool-sep"></span>
+          <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
+          <button type="button" data-cmd="justifyCenter" title="Centralizar" aria-label="Centralizar"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
+          <button type="button" data-cmd="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita"><svg viewBox="0 0 24 24"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
+          <button type="button" data-cmd="justifyFull" title="Justificar" aria-label="Justificar"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
+          <span class="support-tool-sep"></span>
+          <button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores" aria-label="Lista com marcadores"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="5" cy="6" r="1.2"/><circle cx="5" cy="12" r="1.2"/><circle cx="5" cy="18" r="1.2"/></svg></button>
+          <button type="button" data-cmd="insertOrderedList" title="Lista numerada" aria-label="Lista numerada"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10M4 5l1.5-1v5M4 14.5c0-1 2.5-1 2.5.3 0 .9-2.5 1.7-2.5 3.2h2.5"/></svg></button>
+          <button type="button" data-cmd="removeFormat" title="Limpar formatação" aria-label="Limpar formatação"><svg viewBox="0 0 24 24"><path d="M6 5h12M12 5l-3 14M4 20l16-16"/></svg></button>
+        </div>
+        <div id="support-editor" class="support-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Descreva o que aconteceu, os passos para reproduzir e o que você esperava. Se for sugestão, conte a ideia."></div>
+      </div>
+      <div id="support-msg" class="support-msg" hidden></div>
+      <div class="support-actions">
+        <button class="btn btn-secondary" type="button" data-fechar-suporte>Cancelar</button>
+        <button id="support-submit" class="btn btn-primary" type="submit">Enviar chamado</button>
+      </div>
+    </form>
+    <div id="support-success" class="support-success" hidden>
+      <div class="support-success-icon">&#10003;</div>
+      <h3>Chamado enviado</h3>
+      <p>Recebemos seu chamado e vamos analisar. Você pode acompanhar o status em <strong>Minha conta</strong>.</p>
+      <button class="btn btn-primary" type="button" data-fechar-suporte>Fechar</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -421,5 +507,6 @@
 <script src="lib/supabaseClient.js"></script>
 <script src="auth.js"></script>
 <script src="app.js"></script>
+<script src="support.js"></script>
 </body>
 </html>
