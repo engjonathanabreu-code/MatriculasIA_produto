@@ -124,3 +124,32 @@ create index idx_support_tickets_user on public.support_tickets(user_id, criado_
 create index idx_support_tickets_status on public.support_tickets(status, criado_em desc);
 alter table public.support_tickets enable row level security;
 -- sem policies: leitura/escrita apenas pelo backend (service_role)
+
+-- =============================================================================
+-- Periodo de testes (out/2026): Plano Testes, lotes de analise e primeiro acesso
+-- (ja aplicado no projeto Supabase via migrations plano_testes_parte1/2)
+-- =============================================================================
+alter table public.plans
+  add column if not exists conta_por_lote boolean not null default false,   -- true: 1 analise = 1 lote
+  add column if not exists max_arquivos_por_analise integer;                -- arquivos por lote
+insert into public.plans (id, nome, preco_centavos, limite_analises, ativo, conta_por_lote, max_arquivos_por_analise)
+values ('testes', 'Plano Testes', 0, 10, true, true, 10) on conflict (id) do nothing;
+
+create table if not exists public.analysis_batches (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  subscription_id uuid references public.subscriptions(id) on delete set null,
+  arquivos_declarados integer not null check (arquivos_declarados between 1 and 50),
+  criado_em timestamptz not null default now()
+);
+alter table public.analysis_batches enable row level security;
+create policy batches_select_own on public.analysis_batches for select using ((select auth.uid()) = user_id);
+alter table public.analysis_usage add column if not exists lote_id uuid references public.analysis_batches(id) on delete set null;
+
+alter table public.profiles
+  add column if not exists deve_trocar_senha boolean not null default false,
+  add column if not exists criado_por_admin boolean not null default false;
+
+-- profiles so e escrito pelo backend (service_role): o navegador nao pode
+-- alterar stripe_customer_id, termos_aceitos_em ou deve_trocar_senha.
+alter policy profiles_update_own on public.profiles using (false) with check (false);

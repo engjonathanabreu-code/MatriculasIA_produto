@@ -1089,3 +1089,16 @@ button, input{ font-family: inherit; }
 .forca-senha-barra{ height: 5px; background: #eceef2; border-radius: 999px; overflow: hidden; }
 .forca-senha-fill{ height: 100%; width: 0%; border-radius: 999px; transition: width 0.2s, background 0.2s; background: var(--error); }
 .forca-senha-texto{ font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+
+/* ============================================================================
+   PRIMEIRO ACESSO (troca de senha provisoria + aceite dos termos)
+   ============================================================================ */
+#primeiro-acesso-gate{ z-index: 1001; }
+#primeiro-acesso-gate[hidden]{ display: none !important; }
+#primeiro-acesso-gate .auth-card{ max-width: 420px; }
+.pa-titulo{ font-size: 18px; font-weight: 800; margin: 0 0 6px; text-align: center; color: var(--text-primary); }
+.pa-sub{ font-size: 13px; line-height: 1.5; color: var(--text-secondary); text-align: center; margin: 0 0 18px; }
+.auth-error[hidden]{ display: none !important; }
+.campos-cadastro.pa-oculto{ display: none !important; }
+.pa-sair{ display: block; margin: 14px auto 0; background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.pa-sair:hover{ color: var(--text-primary); }

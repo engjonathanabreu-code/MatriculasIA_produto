@@ -20,6 +20,42 @@
 </head>
 <body class="notranslate" translate="no">
 
+<!-- ===================== PRIMEIRO ACESSO (nova senha + termos) ===================== -->
+<div id="primeiro-acesso-gate" class="auth-gate" hidden style="display:none">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-name">Matrícula<span class="brand-accent">.IA</span></span>
+    </div>
+    <h2 class="pa-titulo">Bem-vindo(a) ao Matrícula.IA</h2>
+    <p id="pa-subtitulo" class="pa-sub">Antes de começar, defina sua senha pessoal e confirme que está de acordo com os termos.</p>
+
+    <p id="pa-erro" class="auth-error" hidden style="display:none"></p>
+
+    <form id="form-primeiro-acesso" class="auth-form" novalidate>
+      <div id="pa-campos-senha" class="campos-cadastro">
+        <label class="auth-field">
+          <span>Nova senha</span>
+          <input type="password" id="pa-senha" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres, com letras e números" />
+        </label>
+        <div class="forca-senha-wrap">
+          <div class="forca-senha-barra"><div id="pa-forca-fill" class="forca-senha-fill"></div></div>
+          <span id="pa-forca-texto" class="forca-senha-texto"></span>
+        </div>
+        <label class="auth-field">
+          <span>Confirme a nova senha</span>
+          <input type="password" id="pa-senha2" autocomplete="new-password" minlength="8" />
+        </label>
+      </div>
+      <label class="auth-checkbox">
+        <input type="checkbox" id="pa-aceite" />
+        <span>Li e concordo com os <a href="termos.html" target="_blank" rel="noopener">Termos de Serviço</a> e com a <a href="termos.html#privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+      </label>
+      <button type="submit" id="pa-enviar" class="btn btn-primary">Salvar e continuar</button>
+    </form>
+    <button type="button" id="pa-sair" class="pa-sair">Sair desta conta</button>
+  </div>
+</div>
+
 <!-- ===================== TELA DE AUTENTICACAO ===================== -->
 <div id="auth-gate" class="auth-gate">
   <div class="auth-card">
@@ -403,6 +439,7 @@
           <div><div class="rs-metric-label">Renova em</div><div class="rs-metric-value" id="conta-renovacao">N/D</div></div>
           <div><div class="rs-metric-label">Status</div><div class="rs-metric-value" id="conta-status">N/D</div></div>
         </div>
+        <p id="conta-nota-lote" class="citadas-sub" style="margin-top:12px;" hidden></p>
         <div class="form-actions" style="margin-top:20px;">
           <button id="btn-gerenciar-assinatura" class="btn btn-secondary" type="button">Gerenciar assinatura / trocar de plano</button>
         </div>

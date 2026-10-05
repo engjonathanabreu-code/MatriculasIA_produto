@@ -24,6 +24,22 @@
  * ---------------------------------------------------------------------------
  */
 const { handleUpload } = require("@vercel/blob/client");
+const { getSupabaseAdmin } = require("../server/supabaseAdmin");
+
+/**
+ * So usuarios logados podem pedir token de upload. O navegador manda o
+ * access_token do Supabase no clientPayload do upload() (ver app.js).
+ * Sem isso, qualquer pessoa na internet poderia usar o nosso Blob Store
+ * como armazenamento gratuito de arquivos.
+ */
+async function exigirUsuarioLogado(clientPayload) {
+  let token = null;
+  try { token = JSON.parse(clientPayload || "{}").accessToken || null; } catch (e) { token = null; }
+  if (!token) throw new Error("Faca login para enviar documentos.");
+  const { data, error } = await getSupabaseAdmin().auth.getUser(token);
+  if (error || !data || !data.user) throw new Error("Sessao expirada. Entre novamente para enviar documentos.");
+  return data.user;
+}
 
 const ALLOWED_CONTENT_TYPES = [
   "application/pdf",
@@ -51,7 +67,8 @@ module.exports = async function handler(req, res) {
     const jsonResponse = await handleUpload({
       body: req.body,
       request: req,
-      onBeforeGenerateToken: async function () {
+      onBeforeGenerateToken: async function (pathname, clientPayload) {
+        await exigirUsuarioLogado(clientPayload);
         return {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,
           maximumSizeInBytes: maxBytes,

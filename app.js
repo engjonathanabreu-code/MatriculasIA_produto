@@ -367,7 +367,7 @@
   }
 
   /** Verifica o CAPTCHA uma unica vez no servidor, para todo o lote que vai comecar agora. */
-  async function verificarCaptchaDoLote() {
+  async function verificarCaptchaDoLote(quantidadeArquivos) {
     var token = await aguardarTurnstileToken();
     var resp = await fetch("/api/verify-captcha", {
       method: "POST",
@@ -375,17 +375,28 @@
         "Content-Type": "application/json",
         Authorization: "Bearer " + (window.__auth ? window.__auth.getAccessToken() : "")
       },
-      body: JSON.stringify({ turnstileToken: token })
+      body: JSON.stringify({ turnstileToken: token, quantidadeArquivos: quantidadeArquivos })
     });
-    var json = await resp.json();
+    var json = {};
+    try { json = await resp.json(); } catch (e) { json = {}; }
     // token e de uso unico - pede um novo desde ja, para a proxima vez que for preciso
     if (_turnstileAnaliseWidgetId != null && typeof turnstile !== "undefined") {
       _turnstileAnaliseToken = null;
       turnstile.reset(_turnstileAnaliseWidgetId);
     }
     if (!resp.ok || !json.sucesso) {
-      throw new Error(json.erro || "Verificacao de seguranca falhou.");
+      var erroLote = new Error(json.erro || "Verificacao de seguranca falhou.");
+      erroLote.precisaUpgrade = !!(json.precisaAssinatura || json.limiteAtingido);
+      if (json.precisaPrimeiroAcesso && window.__auth && window.__auth.abrirPrimeiroAcesso) window.__auth.abrirPrimeiroAcesso();
+      throw erroLote;
     }
+    return json.loteId || null;
+  }
+
+  function maxArquivosPorLote() {
+    return window.__auth && window.__auth.getMaxArquivosPorAnalise
+      ? window.__auth.getMaxArquivosPorAnalise()
+      : MAX_ARQUIVOS_POR_LOTE;
   }
 
   function handleFilesSelected(fileList) {
@@ -394,8 +405,8 @@
     var jaNaFila = state.filaUpload.length;
 
     Array.prototype.forEach.call(fileList, function (file) {
-      if (jaNaFila >= MAX_ARQUIVOS_POR_LOTE) {
-        erros.push(file.name + ": limite de " + MAX_ARQUIVOS_POR_LOTE + " documentos por lote atingido, nao adicionado.");
+      if (jaNaFila >= maxArquivosPorLote()) {
+        erros.push(file.name + ": limite de " + maxArquivosPorLote() + " documentos por analise atingido, nao adicionado.");
         return;
       }
       var ext = file.name.split(".").pop().toLowerCase();
@@ -486,6 +497,8 @@
     var blob = await window.VercelBlobClient.upload(file.name, file, {
       access: "public",
       handleUploadUrl: "/api/blob-upload",
+      // o servidor so emite token de upload para usuario logado
+      clientPayload: JSON.stringify({ accessToken: window.__auth ? window.__auth.getAccessToken() : null }),
       onUploadProgress: onProgress
     });
     return blob.url;
@@ -556,11 +569,21 @@
     document.getElementById("result-summary").hidden = true;
     hideUploadError();
 
+    if (pendentes.length > maxArquivosPorLote()) {
+      state.processandoFila = false;
+      document.getElementById("btn-analisar").disabled = false;
+      document.getElementById("progress-card").hidden = true;
+      showUploadError("Cada analise pode ter no maximo " + maxArquivosPorLote() + " arquivos. Remova alguns da lista.");
+      return;
+    }
+
+    var loteId = null;
     try {
-      await verificarCaptchaDoLote();
+      loteId = await verificarCaptchaDoLote(pendentes.length);
     } catch (err) {
       state.processandoFila = false;
       document.getElementById("btn-analisar").disabled = false;
+      document.getElementById("progress-card").hidden = true;
       showUploadError((err && err.message) || "Verificacao de seguranca falhou.");
       return;
     }
@@ -575,7 +598,7 @@
       renderProgressSteps(0, -1, null);
 
       try {
-        var doc = await analisarUmArquivo(item.file, project);
+        var doc = await analisarUmArquivo(item.file, project, loteId);
         item.status = "ok";
         state.documentoSelecionadoId = doc.id;
         renderResultSummaryFor(doc);
@@ -608,7 +631,7 @@
   }
 
   /** Analisa UM arquivo e devolve o "documento" ja adicionado ao projeto. Lanca erro em caso de falha. */
-  async function analisarUmArquivo(file, project) {
+  async function analisarUmArquivo(file, project, loteId) {
     var blobUrl = await withTimeout(
       uploadToBlob(file, function (progress) {
         setStatusPill("processing", "Enviando " + file.name + "... " + Math.round(progress.percentage) + "%");
@@ -629,14 +652,16 @@
         body: JSON.stringify({
           filename: file.name,
           mimeType: file.type || guessMimeFromName(file.name),
-          blobUrl: blobUrl
+          blobUrl: blobUrl,
+          loteId: loteId || null
         })
       }),
       290000,
       "A analise demorou demais e foi cancelada (mais de 4:50min). O documento pode ser muito grande ou complexo; tente novamente."
     );
 
-    var json = await resp.json();
+    var json = {};
+    try { json = await resp.json(); } catch (e) { json = { erro: "Resposta invalida do servidor (HTTP " + resp.status + ")." }; }
     if (!resp.ok || !json.sucesso) {
       var erroApi = new Error((json && json.erro) || "Falha ao analisar o documento.");
       erroApi.precisaUpgrade = !!(json && (json.precisaAssinatura || json.limiteAtingido));

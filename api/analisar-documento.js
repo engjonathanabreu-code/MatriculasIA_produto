@@ -606,59 +606,30 @@ module.exports = async function handler(req, res) {
   }
 
   const ip = getClientIp(req);
-  const limiteIp = await checarRateLimit(req, "analisar-documento", 15, 15 * 60 * 1000);
+  const limiteIp = await checarRateLimit(req, "analisar-documento", 40, 15 * 60 * 1000);
   if (!limiteIp.permitido) {
     return sendJson(res, 429, { erro: "Muitas analises em pouco tempo deste endereco. Aguarde alguns minutos." });
   }
 
-  // Contas de administrador/teste (definidas na variavel de ambiente ADMIN_EMAILS,
-  // separadas por virgula) pulam a checagem de plano/cota - uteis para o dono
-  // do sistema testar sem precisar passar pelo Stripe. Continuam autenticadas
-  // normalmente (login obrigatorio) e sujeitas ao CAPTCHA/rate limit acima.
-  const adminEmails = (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map(function (e) { return e.trim().toLowerCase(); })
-    .filter(Boolean);
-  const ehAdmin = adminEmails.indexOf((usuario.email || "").toLowerCase()) !== -1;
-
+  // Primeiro acesso concluido + plano ativo + cota (por arquivo ou por lote,
+  // conforme o plano). Contas em ADMIN_EMAILS pulam plano/cota. Ver server/cota.js.
+  const { autorizarArquivo, liberarArquivo } = require("../server/cota");
   const admin = getSupabaseAdmin();
   let assinatura = null;
-
-  if (!ehAdmin) {
-    const { data: assinaturaEncontrada } = await admin
-      .from("subscriptions")
-      .select("*, plans(*)")
-      .eq("user_id", usuario.id)
-      .eq("status", "active")
-      .order("criado_em", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    assinatura = assinaturaEncontrada;
-
-    if (!assinatura) {
-      return sendJson(res, 402, {
-        erro: "Voce ainda nao tem um plano ativo. Assine um plano para analisar documentos.",
-        precisaAssinatura: true
-      });
-    }
-
-    const inicioPeriodo = assinatura.periodo_inicio || assinatura.criado_em;
-    const { count: usoNoPeriodo } = await admin
-      .from("analysis_usage")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", usuario.id)
-      .gte("criado_em", inicioPeriodo);
-
-    const limitePlano = assinatura.plans ? assinatura.plans.limite_analises : 0;
-    if ((usoNoPeriodo || 0) >= limitePlano) {
-      return sendJson(res, 402, {
-        erro:
-          "Voce atingiu o limite de " + limitePlano + " analises do seu plano (" +
-          (assinatura.plans ? assinatura.plans.nome : "") + ") neste periodo. " +
-        "Faca upgrade de plano ou aguarde a renovacao.",
-        limiteAtingido: true
-      });
-    }
+  let loteId = null;
+  let reservado = false;
+  try {
+    const autorizacao = await autorizarArquivo(admin, usuario, body.loteId);
+    assinatura = autorizacao.assinatura;
+    loteId = autorizacao.loteId;
+    reservado = autorizacao.reservado;
+  } catch (err) {
+    if (!err.statusCode) console.error("[analisar-documento] erro ao validar cota:", err);
+    try { await del(blobUrl); } catch (e) { /* melhor esforco */ }
+    return sendJson(res, err.statusCode || 500, Object.assign(
+      { erro: err.statusCode ? err.message : "Nao foi possivel validar seu plano. Tente novamente." },
+      err.extra || {}
+    ));
   }
 
   const model = process.env.CLAUDE_MODEL || DEFAULT_MODEL;
@@ -678,6 +649,11 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // Falhou: devolve a reserva do arquivo no lote (Plano Testes).
+  if (reservado && !(result && result.status === 200 && result.payload && result.payload.sucesso)) {
+    await liberarArquivo(admin, usuario.id, loteId);
+  }
+
   // Registra o consumo da cota SOMENTE se a analise foi bem sucedida (falhas
   // por erro do documento/IA nao devem consumir a cota mensal do cliente).
   if (result.status === 200 && result.payload && result.payload.sucesso) {
@@ -689,6 +665,7 @@ module.exports = async function handler(req, res) {
       await admin.from("analysis_usage").insert({
         user_id: usuario.id,
         subscription_id: assinatura ? assinatura.id : null,
+        lote_id: loteId,
         matricula_numero: numeroMatricula,
         sucesso: true
       });

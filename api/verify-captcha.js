@@ -11,6 +11,19 @@
 const { getAuthenticatedUser } = require("../server/supabaseAdmin");
 const { getClientIp, checarRateLimit } = require("../server/rateLimit");
 const { verificarTurnstile } = require("../server/turnstile");
+const { getSupabaseAdmin } = require("../server/supabaseAdmin");
+const { iniciarLote } = require("../server/cota");
+
+/**
+ * Alem do CAPTCHA, esta rota tambem ABRE o lote de analise no servidor:
+ * valida primeiro acesso, plano, cota e quantidade de arquivos, e devolve
+ * um loteId que o navegador envia junto de cada arquivo para
+ * /api/analisar-documento.
+ */
+async function abrirLote(usuario, body, turnstileBypass) {
+  const lote = await iniciarLote(getSupabaseAdmin(), usuario, body && body.quantidadeArquivos);
+  return { sucesso: true, turnstileBypass: turnstileBypass, loteId: lote.loteId, maxArquivos: lote.maxArquivos };
+}
 
 function sendJson(res, status, payload) {
   res.status(status).json(payload);
@@ -55,8 +68,15 @@ module.exports = async function handler(req, res) {
       "[verify-captcha] Turnstile recusado para usuario autenticado; liberando lote em modo pre-lancamento.",
       { userId: usuario.id, hasToken: Boolean(token) }
     );
-    return sendJson(res, 200, { sucesso: true, turnstileBypass: true });
   }
 
-  return sendJson(res, 200, { sucesso: true, turnstileBypass: false });
+  try {
+    return sendJson(res, 200, await abrirLote(usuario, body, !aprovado));
+  } catch (err) {
+    if (!err.statusCode) console.error("[verify-captcha] erro ao abrir lote:", err);
+    return sendJson(res, err.statusCode || 500, Object.assign(
+      { sucesso: false, erro: err.statusCode ? err.message : "Nao foi possivel iniciar a analise." },
+      err.extra || {}
+    ));
+  }
 };

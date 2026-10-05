@@ -49,6 +49,25 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    // Evita duas assinaturas pagas simultaneas: quem ja assina troca de plano
+    // pelo Portal do Cliente (botao "Gerenciar assinatura").
+    const { data: pagaAtiva, error: erroPagaAtiva } = await admin
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", user.id)
+      .in("status", ["active", "past_due", "trialing"])
+      .not("stripe_subscription_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (erroPagaAtiva) throw erroPagaAtiva;
+    if (pagaAtiva) {
+      res.status(409).json({
+        sucesso: false,
+        erro: "Voce ja tem uma assinatura ativa. Para trocar de plano, use \"Gerenciar assinatura\" em Minha conta."
+      });
+      return;
+    }
+
     const { data: perfil } = await admin.from("profiles").select("*").eq("id", user.id).single();
 
     let stripeCustomerId = perfil && perfil.stripe_customer_id;
@@ -68,6 +87,11 @@ module.exports = async function handler(req, res) {
       customer: stripeCustomerId,
       client_reference_id: user.id,
       line_items: [{ price: plano.stripe_price_id, quantity: 1 }],
+      // Sem isto o Stripe tenta usar os "metodos de pagamento dinamicos" do
+      // painel e, se nenhum estiver ativo para BRL + assinatura, falha com
+      // "No valid payment method types for this Checkout Session".
+      payment_method_types: ["card"],
+      locale: "pt-BR",
       subscription_data: { metadata: { supabase_user_id: user.id, plan_id: planId } },
       success_url: appUrl + "/app.html?checkout=sucesso",
       cancel_url: appUrl + "/app.html?checkout=cancelado",

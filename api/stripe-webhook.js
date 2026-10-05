@@ -87,21 +87,33 @@ async function sincronizarAssinatura(admin, stripe, stripeSubscriptionIdOuObjeto
     return;
   }
 
-  var priceId = subscription.items && subscription.items.data[0] && subscription.items.data[0].price.id;
-  var planId = subscription.metadata && subscription.metadata.plan_id;
-
-  if (!planId && priceId) {
+  var item = subscription.items && subscription.items.data && subscription.items.data[0];
+  var priceId = item && item.price && item.price.id;
+  // O PRECO atual manda: quando o cliente troca de plano pelo Portal do
+  // Stripe, o metadata.plan_id continua com o plano antigo (foi gravado no
+  // checkout). So usa o metadata se o preco nao bater com nenhum plano.
+  var planId = null;
+  if (priceId) {
     var { data: planoPorPreco } = await admin.from("plans").select("id").eq("stripe_price_id", priceId).maybeSingle();
     if (planoPorPreco) planId = planoPorPreco.id;
   }
+  if (!planId) planId = subscription.metadata && subscription.metadata.plan_id;
+  if (!planId) {
+    console.error("[stripe-webhook] nao foi possivel identificar o plano da assinatura:", subscription.id, priceId);
+    throw new Error("Plano nao identificado para a assinatura " + subscription.id);
+  }
+
+  // Nas versoes novas da API do Stripe o periodo fica no item da assinatura.
+  var inicio = subscription.current_period_start || (item && item.current_period_start);
+  var fim = subscription.current_period_end || (item && item.current_period_end);
 
   var registro = {
     user_id: userId,
     plan_id: planId,
     stripe_subscription_id: subscription.id,
     status: subscription.status,
-    periodo_inicio: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
-    periodo_fim: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+    periodo_inicio: inicio ? new Date(inicio * 1000).toISOString() : null,
+    periodo_fim: fim ? new Date(fim * 1000).toISOString() : null,
     cancelar_ao_fim_periodo: !!subscription.cancel_at_period_end,
     atualizado_em: new Date().toISOString()
   };
@@ -118,7 +130,8 @@ async function sincronizarAssinatura(admin, stripe, stripeSubscriptionIdOuObjeto
       .is("stripe_subscription_id", null);
   }
 
-  await admin.from("subscriptions").upsert(registro, { onConflict: "stripe_subscription_id" });
+  var { error: erroUpsert } = await admin.from("subscriptions").upsert(registro, { onConflict: "stripe_subscription_id" });
+  if (erroUpsert) throw erroUpsert; // 500 -> o Stripe reenvia o evento depois
 }
 
 // IMPORTANTE: desliga o parsing automatico do corpo da requisicao - o Stripe
