@@ -12,7 +12,7 @@ const { checarRateLimit } = require("../server/rateLimit");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).json({ sucesso: false, erro: "Metodo nao permitido." });
+    res.status(405).json({ sucesso: false, erro: "Método não permitido." });
     return;
   }
 
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
 
     const { data: perfil } = await admin.from("profiles").select("stripe_customer_id").eq("id", user.id).single();
     if (!perfil || !perfil.stripe_customer_id) {
-      res.status(400).json({ sucesso: false, erro: "Voce ainda nao tem uma assinatura." });
+      res.status(400).json({ sucesso: false, erro: "Você ainda não tem uma assinatura." });
       return;
     }
 

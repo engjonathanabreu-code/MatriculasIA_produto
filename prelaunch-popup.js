@@ -21,10 +21,10 @@
     .prelaunch-field label{display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:6px}
     .prelaunch-field input,.prelaunch-field select{box-sizing:border-box;width:100%;height:46px;border:1px solid #d0d5dd;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:#101828;outline:none}
     .prelaunch-field input:focus,.prelaunch-field select:focus{border-color:#84adff;box-shadow:0 0 0 4px #eff4ff}
-    .prelaunch-submit{width:100%;height:48px;border:0;border-radius:10px;background:#2563eb;color:#fff;font:inherit;font-weight:750;cursor:pointer}.prelaunch-submit:hover{background:#1d4ed8}.prelaunch-submit:disabled{opacity:.6;cursor:wait}
+    .prelaunch-submit{width:100%;height:48px;border:0;border-radius:10px;background:#1d4ed8;color:#fff;font:inherit;font-weight:700;cursor:pointer}.prelaunch-submit:hover{background:#1737a6}.prelaunch-submit:disabled{opacity:.6;cursor:wait}
     .prelaunch-msg{display:none;margin-top:12px;padding:11px 12px;border-radius:9px;font-size:12px}.prelaunch-msg.ok{display:block;background:#ecfdf3;color:#067647}.prelaunch-msg.err{display:block;background:#fef3f2;color:#b42318}
     .prelaunch-fine{font-size:10px;line-height:1.5;color:#98a2b3;text-align:center;margin:12px 0 0}
-    .prelaunch-trigger{position:fixed;right:22px;bottom:22px;z-index:9998;border:0;border-radius:999px;background:#2563eb;color:#fff;padding:13px 18px;font:inherit;font-size:13px;font-weight:750;box-shadow:0 12px 30px rgba(37,99,235,.28);cursor:pointer}
+    .prelaunch-trigger{position:fixed;right:22px;bottom:22px;z-index:9998;border:0;border-radius:999px;background:#1d4ed8;color:#fff;padding:13px 18px;font:inherit;font-size:13px;font-weight:700;box-shadow:0 12px 30px rgba(16,24,40,.18);cursor:pointer}
     @media(max-width:620px){.prelaunch-overlay{padding:12px}.prelaunch-modal{padding:22px 16px;border-radius:16px;max-height:88vh}.prelaunch-grid{grid-template-columns:1fr}.prelaunch-field.full{grid-column:auto}.prelaunch-trigger{right:14px;bottom:14px}.prelaunch-modal h2{font-size:23px}.prelaunch-overlay.is-minimized{padding:12px}.prelaunch-overlay.is-minimized .prelaunch-modal{width:min(310px,calc(100vw - 24px))}}
   `;
   document.head.appendChild(style);

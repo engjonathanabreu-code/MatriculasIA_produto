@@ -93,8 +93,8 @@ function erroLimite(assinatura, limite) {
   return erroHttp(
     402,
     ehTestes
-      ? "Voce ja usou as " + limite + " analises do " + nome + ". Obrigado por testar o Matricula.IA! Para continuar, assine um plano em Minha conta."
-      : "Voce atingiu o limite de " + limite + " analises do seu plano (" + nome + ") neste periodo. Faca upgrade de plano ou aguarde a renovacao.",
+      ? "Você já usou as " + limite + " análises do " + nome + ". Obrigado por testar o Matrícula.IA! Para continuar, assine um plano em Minha conta."
+      : "Você atingiu o limite de " + limite + " análises do seu plano (" + nome + ") neste período. Faça upgrade de plano ou aguarde a renovação.",
     { limiteAtingido: true }
   );
 }
@@ -106,20 +106,20 @@ function erroLimite(assinatura, limite) {
 async function iniciarLote(admin, usuario, quantidadeArquivos) {
   // Sem quantidade informada (versao antiga do app em cache): assume 1.
   const qtd = quantidadeArquivos == null ? 1 : parseInt(quantidadeArquivos, 10);
-  if (!qtd || qtd < 1 || qtd > 50) throw erroHttp(400, "Quantidade de arquivos do lote invalida.");
+  if (!qtd || qtd < 1 || qtd > 50) throw erroHttp(400, "Quantidade de arquivos do lote inválida.");
 
   const ehAdmin = ehEmailAdmin(usuario.email);
   if (!ehAdmin) await exigirPrimeiroAcessoConcluido(admin, usuario.id);
 
   const assinatura = ehAdmin ? null : await buscarAssinaturaAtiva(admin, usuario.id);
   if (!ehAdmin && !assinatura) {
-    throw erroHttp(402, "Voce ainda nao tem um plano ativo. Assine um plano para analisar documentos.", { precisaAssinatura: true });
+    throw erroHttp(402, "Você ainda não tem um plano ativo. Assine um plano para analisar documentos.", { precisaAssinatura: true });
   }
 
   const plano = assinatura && assinatura.plans;
   const maxArquivos = (plano && plano.max_arquivos_por_analise) || 10;
   if (qtd > maxArquivos) {
-    throw erroHttp(400, "Seu plano permite no maximo " + maxArquivos + " arquivos por analise.");
+    throw erroHttp(400, "Seu plano permite no máximo " + maxArquivos + " arquivos por análise.");
   }
 
   if (assinatura) {
@@ -168,7 +168,7 @@ async function autorizarArquivo(admin, usuario, loteId) {
 
   const assinatura = await buscarAssinaturaAtiva(admin, usuario.id);
   if (!assinatura) {
-    throw erroHttp(402, "Voce ainda nao tem um plano ativo. Assine um plano para analisar documentos.", { precisaAssinatura: true });
+    throw erroHttp(402, "Você ainda não tem um plano ativo. Assine um plano para analisar documentos.", { precisaAssinatura: true });
   }
   const plano = assinatura.plans || {};
   const limite = plano.limite_analises || 0;
@@ -176,10 +176,10 @@ async function autorizarArquivo(admin, usuario, loteId) {
 
   if (plano.conta_por_lote) {
     if (!lote || lote.subscription_id !== assinatura.id) {
-      throw erroHttp(400, "Lote de analise invalido. Recarregue a pagina e tente novamente.");
+      throw erroHttp(400, "Lote de análise inválido. Recarregue a página e tente novamente.");
     }
     if (Date.now() - new Date(lote.criado_em).getTime() > LOTE_VALIDADE_MS) {
-      throw erroHttp(400, "Este lote de analise expirou. Clique em Analisar novamente.");
+      throw erroHttp(400, "Este lote de análise expirou. Clique em Analisar novamente.");
     }
     const maxArquivos = plano.max_arquivos_por_analise || 10;
     // Reserva atomica no banco (trava por usuario): impede furar a cota ou o
@@ -192,9 +192,9 @@ async function autorizarArquivo(admin, usuario, loteId) {
       p_desde: inicioDoPeriodo(assinatura)
     });
     if (error) throw error;
-    if (resultado === "lote_cheio") throw erroHttp(400, "Esta analise ja atingiu o maximo de " + maxArquivos + " arquivos.");
+    if (resultado === "lote_cheio") throw erroHttp(400, "Esta análise já atingiu o máximo de " + maxArquivos + " arquivos.");
     if (resultado === "limite") throw erroLimite(assinatura, limite);
-    if (resultado !== "ok") throw erroHttp(400, "Lote de analise invalido. Recarregue a pagina e tente novamente.");
+    if (resultado !== "ok") throw erroHttp(400, "Lote de análise inválido. Recarregue a página e tente novamente.");
     return { assinatura: assinatura, loteId: lote.id, reservado: true };
   }
 

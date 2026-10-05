@@ -20,13 +20,13 @@ const { hashSenhaProvisoria } = require("../server/senhaProvisoria");
 function validarSenha(senha) {
   const s = String(senha || "");
   if (s.length < 8) return "A nova senha precisa ter pelo menos 8 caracteres.";
-  if (Buffer.byteLength(s, "utf8") > 72) return "A nova senha e longa demais (maximo 72 caracteres).";
-  if (!/[A-Za-z]/.test(s) || !/[0-9]/.test(s)) return "Use letras e numeros na nova senha.";
+  if (Buffer.byteLength(s, "utf8") > 72) return "A nova senha é longa demais (máximo 72 caracteres).";
+  if (!/[A-Za-z]/.test(s) || !/[0-9]/.test(s)) return "Use letras e números na nova senha.";
   return null;
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ sucesso: false, erro: "Metodo nao permitido." });
+  if (req.method !== "POST") return res.status(405).json({ sucesso: false, erro: "Método não permitido." });
 
   try {
     const limite = await checarRateLimit(req, "primeiro-acesso", 10, 15 * 60 * 1000);
@@ -42,10 +42,10 @@ module.exports = async function handler(req, res) {
       .eq("id", user.id)
       .maybeSingle();
     if (erroPerfil) throw erroPerfil;
-    if (!perfil) return res.status(404).json({ sucesso: false, erro: "Perfil nao encontrado." });
+    if (!perfil) return res.status(404).json({ sucesso: false, erro: "Perfil não encontrado." });
 
     if (body.aceiteTermos !== true) {
-      return res.status(400).json({ sucesso: false, erro: "E preciso concordar com os Termos de Uso e a Politica de Privacidade." });
+      return res.status(400).json({ sucesso: false, erro: "É preciso concordar com os Termos de Uso e a Política de Privacidade." });
     }
 
     const atualizacao = {};
@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
 
       const hashProvisoria = user.app_metadata && user.app_metadata.senha_provisoria_sha;
       if (hashProvisoria && hashProvisoria === hashSenhaProvisoria(user.id, body.novaSenha)) {
-        return res.status(400).json({ sucesso: false, erro: "A nova senha precisa ser diferente da senha provisoria." });
+        return res.status(400).json({ sucesso: false, erro: "A nova senha precisa ser diferente da senha provisória." });
       }
 
       const { error: erroSenha } = await admin.auth.admin.updateUserById(user.id, {
@@ -64,10 +64,10 @@ module.exports = async function handler(req, res) {
       });
       if (erroSenha) {
         const msg = /pwned|leak|breach|weak|known/i.test(erroSenha.message || "")
-          ? "Essa senha e conhecida por ja ter vazado em outros sites. Escolha uma senha diferente."
+          ? "Essa senha é conhecida por já ter vazado em outros sites. Escolha uma senha diferente."
           : /same|different from the old/i.test(erroSenha.message || "")
-            ? "A nova senha precisa ser diferente da senha provisoria."
-            : "Nao foi possivel definir a nova senha: " + erroSenha.message;
+            ? "A nova senha precisa ser diferente da senha provisória."
+            : "Não foi possível definir a nova senha: " + erroSenha.message;
         return res.status(400).json({ sucesso: false, erro: msg });
       }
       atualizacao.deve_trocar_senha = false;

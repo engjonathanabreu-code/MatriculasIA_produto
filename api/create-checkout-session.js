@@ -13,7 +13,7 @@ const { checarRateLimit } = require("../server/rateLimit");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).json({ sucesso: false, erro: "Metodo nao permitido." });
+    res.status(405).json({ sucesso: false, erro: "Método não permitido." });
     return;
   }
 
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     const planId = body && body.planId;
 
     if (!planId || !["basico", "pro", "expert"].includes(planId)) {
-      res.status(400).json({ sucesso: false, erro: "Plano invalido." });
+      res.status(400).json({ sucesso: false, erro: "Plano inválido." });
       return;
     }
 
@@ -38,13 +38,13 @@ module.exports = async function handler(req, res) {
 
     const { data: plano, error: erroPlano } = await admin.from("plans").select("*").eq("id", planId).single();
     if (erroPlano || !plano) {
-      res.status(400).json({ sucesso: false, erro: "Plano nao encontrado." });
+      res.status(400).json({ sucesso: false, erro: "Plano não encontrado." });
       return;
     }
     if (!plano.stripe_price_id) {
       res.status(500).json({
         sucesso: false,
-        erro: "Este plano ainda nao foi configurado no Stripe (falta o stripe_price_id na tabela plans)."
+        erro: "Este plano ainda não foi configurado no Stripe (falta o stripe_price_id na tabela plans)."
       });
       return;
     }
@@ -63,7 +63,7 @@ module.exports = async function handler(req, res) {
     if (pagaAtiva) {
       res.status(409).json({
         sucesso: false,
-        erro: "Voce ja tem uma assinatura ativa. Para trocar de plano, use \"Gerenciar assinatura\" em Minha conta."
+        erro: "Você já tem uma assinatura ativa. Para trocar de plano, use \"Gerenciar assinatura\" em Minha conta."
       });
       return;
     }

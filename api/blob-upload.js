@@ -35,9 +35,9 @@ const { getSupabaseAdmin } = require("../server/supabaseAdmin");
 async function exigirUsuarioLogado(clientPayload) {
   let token = null;
   try { token = JSON.parse(clientPayload || "{}").accessToken || null; } catch (e) { token = null; }
-  if (!token) throw new Error("Faca login para enviar documentos.");
+  if (!token) throw new Error("Faça login para enviar documentos.");
   const { data, error } = await getSupabaseAdmin().auth.getUser(token);
-  if (error || !data || !data.user) throw new Error("Sessao expirada. Entre novamente para enviar documentos.");
+  if (error || !data || !data.user) throw new Error("Sessão expirada. Entre novamente para enviar documentos.");
   return data.user;
 }
 
@@ -58,7 +58,7 @@ function sendJson(res, status, payload) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
-    return sendJson(res, 405, { erro: "Metodo nao permitido. Use POST." });
+    return sendJson(res, 405, { erro: "Método não permitido. Use POST." });
   }
 
   const maxBytes = parseInt(process.env.MAX_FILE_SIZE_BYTES, 10) || DEFAULT_MAX_BYTES;

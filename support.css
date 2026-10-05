@@ -11,7 +11,7 @@
   transition: color .15s, border-color .15s, background .15s;
 }
 .support-sidebar-btn svg{ width: 17px; height: 17px; flex-shrink: 0; }
-.support-sidebar-btn:hover{ color: #fff; border-color: #33405f; background: var(--sidebar-bg-elevated); }
+.support-sidebar-btn:hover{ color: #fff; border-color: #344054; background: var(--sidebar-bg-elevated); }
 
 /* Card em Minha conta */
 .support-card{ margin-top: 18px; }

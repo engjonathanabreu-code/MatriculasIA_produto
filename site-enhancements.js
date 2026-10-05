@@ -34,10 +34,10 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    .lp-feature-icon svg{width:27px;height:27px;fill:none;stroke:#2563eb;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;display:block}
-    .lp-feature-icon{display:flex;align-items:center;justify-content:center;color:#2563eb}
+    .lp-feature-icon svg{width:27px;height:27px;fill:none;stroke:#1d4ed8;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;display:block}
+    .lp-feature-icon{display:flex;align-items:center;justify-content:center;color:#1d4ed8}
     .footer-admin-link{color:inherit;text-decoration:none;transition:color .15s ease}
-    .footer-admin-link:hover{color:#2563eb;text-decoration:underline;text-underline-offset:3px}
+    .footer-admin-link:hover{color:#1d4ed8;text-decoration:underline;text-underline-offset:3px}
   `;
   document.head.appendChild(style);
 

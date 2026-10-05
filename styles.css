@@ -1,46 +1,53 @@
 /* =========================================================================
-   INTEGRAL GEO MATRÍCULA — estilos
-   Identidade: SaaS/GIS técnico corporativo. Fundo claro, sidebar escura,
-   cards brancos, cantos discretamente arredondados, tipografia moderna.
+   MATRÍCULA.IA — estilos
+   Segue o UI Guide Matrícula.IA v1.0: fundo cinza-claro, menu azul-marinho,
+   cartões brancos com borda de 1px, azul só para ação/seleção, sem degradês.
    ========================================================================= */
 
 :root{
-  --bg: #f3f4f7;
+  /* Tokens do UI Guide Matrícula.IA v1.0 (base: Manual de Uso da Marca v1.0).
+     Marca: azul #1D4ED8, azul-marinho #101828, cinza de apoio #667085,
+     cinza-claro #F5F7FB, branco. Demais tons são extensões de interface. */
+  --bg: #f5f7fb;              /* cinza-claro (manual) */
   --surface: #ffffff;
-  --border: #e3e5eb;
-  --border-strong: #d3d6de;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
 
-  --text-primary: #171a21;
-  --text-secondary: #5b6072;
-  --text-muted: #8a8fa3;
+  --text-primary: #101828;    /* azul-marinho (manual) */
+  --text-secondary: #475467;
+  --text-muted: #667085;      /* cinza de apoio (manual) */
+  --text-disabled: #98a2b3;   /* só desabilitado/placeholder (2,6:1) */
 
-  --sidebar-bg: #0c1220;
-  --sidebar-bg-elevated: #121a2c;
+  --sidebar-bg: #101828;      /* azul-marinho (manual) */
+  --sidebar-bg-elevated: #1d2939;
   --sidebar-text: #aab2c8;
+  --sidebar-text-muted: #98a2b3;
   --sidebar-text-active: #ffffff;
-  --sidebar-border: #1d2438;
+  --sidebar-border: #1d2939;
 
-  --accent: #1d4ed8;
-  --accent-dark: #1737a6;
+  --accent: #1d4ed8;          /* azul Matrícula.IA (manual) */
+  --accent-dark: #1737a6;     /* hover */
   --accent-soft: #e8edfc;
   --accent-contrast: #ffffff;
+  --accent-on-dark: #8fb4ff;  /* ".IA" na versão reversa (fundo escuro) */
 
+  /* Verde-azulado: só para camadas de dados no mapa, nunca na interface */
   --teal: #0d9488;
   --teal-soft: #e3f6f3;
 
-  --ok: #0f9d58;
-  --ok-soft: #e5f6ec;
-  --warn: #b7791f;
-  --warn-soft: #fdf3e0;
-  --error: #c0362c;
-  --error-soft: #fbe9e7;
+  --ok: #067647;
+  --ok-soft: #ecfdf3;
+  --warn: #b54708;
+  --warn-soft: #fffaeb;
+  --error: #b42318;
+  --error-soft: #fef3f2;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 8px;   /* botões, campos */
+  --radius-md: 12px;  /* cartões */
+  --radius-lg: 16px;  /* modais, login */
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 12px 32px rgba(16, 24, 40, 0.12);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
@@ -125,8 +132,8 @@ button, input{ font-family: inherit; }
 .brand-mark{
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, var(--accent), var(--accent-dark));
+  border-radius: 0;
+  background: transparent;
   color: #fff;
   display: flex;
   align-items: center;
@@ -137,14 +144,17 @@ button, input{ font-family: inherit; }
   flex-shrink: 0;
 }
 
+.brand-mark svg{ width: 100%; height: 100%; display: block; }
 .brand-text{ display: flex; flex-direction: column; line-height: 1.15; }
 .brand-line1{
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.01em;
   color: #ffffff;
 }
-.brand-accent{ color: #8fb4ff; font-weight: 800; }
+.brand-accent{ color: var(--accent-on-dark); font-weight: 800; }
+/* Sobre fundo claro (login, primeiro acesso) o ".IA" usa o azul da marca */
+.auth-card .brand-accent{ color: var(--accent); }
 .brand-line2{
   font-size: 13.5px;
   font-weight: 500;
@@ -197,7 +207,7 @@ button, input{ font-family: inherit; }
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #8890a6;
+  color: var(--sidebar-text-muted);
 }
 .footer-credit-dev{
   font-size: 10.5px;
@@ -214,7 +224,7 @@ button, input{ font-family: inherit; }
   color: var(--sidebar-text);
 }
 .status-pill--idle{ background: var(--sidebar-bg-elevated); }
-.status-pill--processing{ background: #21305a; color: #cfe0ff; border-color: #2d3f72; }
+.status-pill--processing{ background: #1e3a8a; color: #dbe4ff; border-color: #2f4fa8; }
 .status-pill--ok{ background: #0e3a2c; color: #8be3bb; border-color: #145a41; }
 .status-pill--error{ background: #3a1414; color: #ffb4a8; border-color: #5a1c1c; }
 
@@ -328,7 +338,7 @@ button, input{ font-family: inherit; }
 .fila-item-meta{ font-size: 11.5px; color: var(--text-muted); }
 .fila-item-status{ font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
 .fila-item-status--pendente{ background: var(--accent-soft); color: var(--accent); }
-.fila-item-status--processando{ background: #21305a1a; color: var(--accent); }
+.fila-item-status--processando{ background: var(--accent-soft); color: var(--accent); }
 .fila-item-status--ok{ background: var(--ok-soft); color: var(--ok); }
 .fila-item-status--erro{ background: var(--error-soft); color: var(--error); }
 
@@ -344,7 +354,7 @@ button, input{ font-family: inherit; }
   transition: transform 0.05s ease, opacity 0.15s ease, background 0.15s ease;
 }
 .btn:active{ transform: scale(0.98); }
-.btn:disabled{ opacity: 0.45; cursor: not-allowed; }
+.btn:disabled{ background: #f2f4f7; color: var(--text-disabled); border-color: var(--border); cursor: not-allowed; box-shadow: none; }
 
 .btn-primary{
   background: var(--accent);
@@ -353,6 +363,7 @@ button, input{ font-family: inherit; }
   margin-top: 18px;
 }
 .btn-primary:hover:not(:disabled){ background: var(--accent-dark); }
+.btn-primary:disabled, .btn-secondary:disabled{ background: #f2f4f7; color: var(--text-disabled); border-color: var(--border); }
 
 .btn-secondary{
   background: #fff;
@@ -732,7 +743,7 @@ button, input{ font-family: inherit; }
 }
 .origem-EXTRAIDO{ background: var(--accent-soft); color: var(--accent); }
 .origem-EDITADO{ background: var(--warn-soft); color: var(--warn); }
-.origem-CALCULADO{ background: var(--teal-soft); color: var(--teal); }
+.origem-CALCULADO{ background: #f2f4f7; color: #344054; }
 
 .confidence-cell{ font-family: var(--font-mono); font-weight: 700; }
 
@@ -919,7 +930,7 @@ button, input{ font-family: inherit; }
 .auth-gate{
   position: fixed;
   inset: 0;
-  background: var(--sidebar-bg);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -930,13 +941,14 @@ button, input{ font-family: inherit; }
 .auth-card{
   width: 100%;
   max-width: 380px;
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg, 16px);
   padding: 32px 28px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  box-shadow: var(--shadow-sm);
 }
 .auth-brand{ display: flex; align-items: center; gap: 10px; margin-bottom: 24px; justify-content: center; }
-.auth-brand-name{ font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.auth-brand-name{ font-size: 19px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
 
 .auth-tabs{ display: flex; background: #f1f2f6; border-radius: 999px; padding: 3px; margin-bottom: 20px; }
 .auth-tab{
@@ -999,16 +1011,16 @@ button, input{ font-family: inherit; }
 .usage-logout{
   background: transparent;
   border: none;
-  color: #8890a6;
+  color: var(--sidebar-text-muted);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   padding: 2px 6px;
 }
 .usage-logout:hover{ color: #fff; }
-.usage-bar{ height: 6px; background: #1d2438; border-radius: 999px; overflow: hidden; }
-.usage-bar-fill{ height: 100%; background: linear-gradient(90deg, var(--accent), #8fb4ff); border-radius: 999px; transition: width 0.3s; }
-.usage-text{ font-size: 11px; color: #8890a6; }
+.usage-bar{ height: 6px; background: #344054; border-radius: 999px; overflow: hidden; }
+.usage-bar-fill{ height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s; }
+.usage-text{ font-size: 11px; color: var(--sidebar-text-muted); }
 
 /* ============================================================================
    CARDS DE PLANOS (Minha conta)

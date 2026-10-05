@@ -19,7 +19,7 @@ function getSupabaseAdmin() {
 
   if (!url || !serviceRoleKey) {
     throw new Error(
-      "SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY nao configurados nas variaveis de ambiente da Vercel."
+      "SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados nas variáveis de ambiente da Vercel."
     );
   }
 
@@ -37,7 +37,7 @@ async function getAuthenticatedUser(req) {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) {
-    const err = new Error("Nao autenticado: token ausente.");
+    const err = new Error("Não autenticado: token ausente.");
     err.statusCode = 401;
     throw err;
   }
@@ -45,7 +45,7 @@ async function getAuthenticatedUser(req) {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data || !data.user) {
-    const err = new Error("Nao autenticado: token invalido ou expirado.");
+    const err = new Error("Não autenticado: token inválido ou expirado.");
     err.statusCode = 401;
     throw err;
   }

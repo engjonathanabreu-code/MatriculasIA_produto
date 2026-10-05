@@ -524,7 +524,7 @@ async function callClaude(apiKey, model, filename, mimeType, blobUrl) {
   try {
     anthropicJson = await anthropicRes.json();
   } catch (err) {
-    return { status: 502, payload: { erro: "Resposta invalida do Claude." } };
+    return { status: 502, payload: { erro: "Resposta inválida do Claude." } };
   }
 
   if (!anthropicRes.ok) {
@@ -536,7 +536,7 @@ async function callClaude(apiKey, model, filename, mimeType, blobUrl) {
 
   const extracted = extractToolInput(anthropicJson, "extrair_dados_matricula");
   if (!extracted) {
-    return { status: 502, payload: { erro: "O Claude nao retornou dados estruturados para este documento." } };
+    return { status: 502, payload: { erro: "O Claude não retornou dados estruturados para este documento." } };
   }
 
   return { status: 200, payload: { sucesso: true, dados: extracted } };
@@ -544,13 +544,13 @@ async function callClaude(apiKey, model, filename, mimeType, blobUrl) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
-    return sendJson(res, 405, { erro: "Metodo nao permitido. Use POST." });
+    return sendJson(res, 405, { erro: "Método não permitido. Use POST." });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return sendJson(res, 500, {
-      erro: "Configuracao ausente no servidor: ANTHROPIC_API_KEY nao foi definida."
+      erro: "Configuração ausente no servidor: ANTHROPIC_API_KEY não foi definida."
     });
   }
 
@@ -559,11 +559,11 @@ module.exports = async function handler(req, res) {
     try {
       body = JSON.parse(body);
     } catch (e) {
-      return sendJson(res, 400, { erro: "Corpo da requisicao invalido (JSON malformado)." });
+      return sendJson(res, 400, { erro: "Corpo da requisição inválido (JSON malformado)." });
     }
   }
   if (!body || typeof body !== "object") {
-    return sendJson(res, 400, { erro: "Corpo da requisicao ausente." });
+    return sendJson(res, 400, { erro: "Corpo da requisição ausente." });
   }
 
   const { filename, mimeType, blobUrl } = body;
@@ -584,7 +584,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (!isTrustedBlobUrl(blobUrl)) {
-    return sendJson(res, 400, { erro: "URL de arquivo invalida." });
+    return sendJson(res, 400, { erro: "URL de arquivo inválida." });
   }
 
   // =========================================================================
@@ -602,13 +602,13 @@ module.exports = async function handler(req, res) {
   try {
     usuario = await getAuthenticatedUser(req);
   } catch (e) {
-    return sendJson(res, 401, { erro: "Faca login para analisar documentos." });
+    return sendJson(res, 401, { erro: "Faça login para analisar documentos." });
   }
 
   const ip = getClientIp(req);
   const limiteIp = await checarRateLimit(req, "analisar-documento", 40, 15 * 60 * 1000);
   if (!limiteIp.permitido) {
-    return sendJson(res, 429, { erro: "Muitas analises em pouco tempo deste endereco. Aguarde alguns minutos." });
+    return sendJson(res, 429, { erro: "Muitas análises em pouco tempo deste endereço. Aguarde alguns minutos." });
   }
 
   // Primeiro acesso concluido + plano ativo + cota (por arquivo ou por lote,
@@ -627,7 +627,7 @@ module.exports = async function handler(req, res) {
     if (!err.statusCode) console.error("[analisar-documento] erro ao validar cota:", err);
     try { await del(blobUrl); } catch (e) { /* melhor esforco */ }
     return sendJson(res, err.statusCode || 500, Object.assign(
-      { erro: err.statusCode ? err.message : "Nao foi possivel validar seu plano. Tente novamente." },
+      { erro: err.statusCode ? err.message : "Não foi possível validar seu plano. Tente novamente." },
       err.extra || {}
     ));
   }
@@ -670,7 +670,7 @@ module.exports = async function handler(req, res) {
         sucesso: true
       });
     } catch (e) {
-      console.error("[analisar-documento] falha ao registrar uso (nao bloqueia a resposta):", e.message);
+      console.error("[analisar-documento] falha ao registrar uso (não bloqueia a resposta):", e.message);
     }
   }
 

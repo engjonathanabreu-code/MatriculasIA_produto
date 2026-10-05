@@ -36,11 +36,11 @@
     "Documento enviado",
     "Lendo documento",
     "Identificando sistema de coordenadas",
-    "Extraindo vertices",
+    "Extraindo vértices",
     "Validando coordenadas",
     "Construindo poligonal",
     "Calculando geometria",
-    "Analise concluida"
+    "Análise concluída"
   ];
 
   var COLOR_PALETTE = [
@@ -214,7 +214,7 @@
     var project = getActiveProject();
     if (project) return project;
     var sugestao = "Projeto " + new Date().toLocaleDateString("pt-BR");
-    var nome = window.prompt("Nome do projeto para esta(s) analise(s):", sugestao);
+    var nome = window.prompt("Nome do projeto para esta(s) análise(s):", sugestao);
     if (!nome) return null;
     var p = createProject(nome.trim() || sugestao);
     renderProjetos();
@@ -385,7 +385,7 @@
       turnstile.reset(_turnstileAnaliseWidgetId);
     }
     if (!resp.ok || !json.sucesso) {
-      var erroLote = new Error(json.erro || "Verificacao de seguranca falhou.");
+      var erroLote = new Error(json.erro || "Verificação de segurança falhou.");
       erroLote.precisaUpgrade = !!(json.precisaAssinatura || json.limiteAtingido);
       if (json.precisaPrimeiroAcesso && window.__auth && window.__auth.abrirPrimeiroAcesso) window.__auth.abrirPrimeiroAcesso();
       throw erroLote;
@@ -406,7 +406,7 @@
 
     Array.prototype.forEach.call(fileList, function (file) {
       if (jaNaFila >= maxArquivosPorLote()) {
-        erros.push(file.name + ": limite de " + maxArquivosPorLote() + " documentos por analise atingido, nao adicionado.");
+        erros.push(file.name + ": limite de " + maxArquivosPorLote() + " documentos por análise atingido, não adicionado.");
         return;
       }
       var ext = file.name.split(".").pop().toLowerCase();
@@ -414,7 +414,7 @@
         ALLOWED_TYPES.indexOf(file.type) !== -1 ||
         ["pdf", "jpg", "jpeg", "png", "webp"].indexOf(ext) !== -1;
       if (!typeOk) {
-        erros.push(file.name + ": formato nao suportado.");
+        erros.push(file.name + ": formato não suportado.");
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
@@ -491,7 +491,7 @@
   async function uploadToBlob(file, onProgress) {
     if (!window.VercelBlobClient || typeof window.VercelBlobClient.upload !== "function") {
       throw new Error(
-        "Biblioteca de upload nao carregou (lib/vendor/vercel-blob-client.bundle.js). Verifique se o arquivo foi enviado ao GitHub e se o script esta referenciado no index.html."
+        "Biblioteca de upload não carregou (lib/vendor/vercel-blob-client.bundle.js). Verifique se o arquivo foi enviado ao GitHub e se o script está referenciado no index.html."
       );
     }
     var blob = await window.VercelBlobClient.upload(file.name, file, {
@@ -573,7 +573,7 @@
       state.processandoFila = false;
       document.getElementById("btn-analisar").disabled = false;
       document.getElementById("progress-card").hidden = true;
-      showUploadError("Cada analise pode ter no maximo " + maxArquivosPorLote() + " arquivos. Remova alguns da lista.");
+      showUploadError("Cada análise pode ter no máximo " + maxArquivosPorLote() + " arquivos. Remova alguns da lista.");
       return;
     }
 
@@ -584,7 +584,7 @@
       state.processandoFila = false;
       document.getElementById("btn-analisar").disabled = false;
       document.getElementById("progress-card").hidden = true;
-      showUploadError((err && err.message) || "Verificacao de seguranca falhou.");
+      showUploadError((err && err.message) || "Verificação de segurança falhou.");
       return;
     }
 
@@ -620,10 +620,10 @@
 
     var houveErro = state.filaUpload.some(function (i) { return i.status === "erro"; });
     if (houveErro) {
-      setStatusPill("error", "Concluido com erros");
-      showUploadError("Alguns documentos nao puderam ser analisados. Veja os detalhes na lista acima.");
+      setStatusPill("error", "Concluído com erros");
+      showUploadError("Alguns documentos não puderam ser analisados. Veja os detalhes na lista acima.");
     } else {
-      setStatusPill("ok", "Analise concluida");
+      setStatusPill("ok", "Análise concluída");
     }
 
     renderAllForActiveProject();
@@ -637,7 +637,7 @@
         setStatusPill("processing", "Enviando " + file.name + "... " + Math.round(progress.percentage) + "%");
       }),
       120000,
-      "O envio do arquivo demorou demais e foi cancelado (mais de 2 minutos). Verifique sua conexao e tente novamente."
+      "O envio do arquivo demorou demais e foi cancelado (mais de 2 minutos). Verifique sua conexão e tente novamente."
     );
 
     renderProgressSteps(1, 0, null);
@@ -657,11 +657,11 @@
         })
       }),
       290000,
-      "A analise demorou demais e foi cancelada (mais de 4:50min). O documento pode ser muito grande ou complexo; tente novamente."
+      "A análise demorou demais e foi cancelada (mais de 4:50min). O documento pode ser muito grande ou complexo; tente novamente."
     );
 
     var json = {};
-    try { json = await resp.json(); } catch (e) { json = { erro: "Resposta invalida do servidor (HTTP " + resp.status + ")." }; }
+    try { json = await resp.json(); } catch (e) { json = { erro: "Resposta inválida do servidor (HTTP " + resp.status + ")." }; }
     if (!resp.ok || !json.sucesso) {
       var erroApi = new Error((json && json.erro) || "Falha ao analisar o documento.");
       erroApi.precisaUpgrade = !!(json && (json.precisaAssinatura || json.limiteAtingido));
@@ -849,7 +849,7 @@
   var UF_HEMISFERIO_INDETERMINADO = ["AP", "PA", "AM", "RR"];
 
   // Apenas 4 estados brasileiros cabem inteiramente dentro de uma unica zona UTM
-  // (fato geografico verificavel, nao suposicao - fonte: IBGE/literatura de
+  // (fato geográfico verificavel, nao suposicao - fonte: IBGE/literatura de
   // geodesia). Todos os demais estados sao maiores que 6 graus de longitude e
   // cruzam mais de uma zona, entao NAO entram nesta tabela (ficam para
   // preenchimento manual quando o documento nao informar a zona).
@@ -869,9 +869,9 @@
    *    da formula: zona = (183 - meridiano_central_oeste) / 6.
    *  - Se a zona ainda nao foi determinada, mas o estado do imovel e um dos 4
    *    que cabem inteiros numa unica zona UTM (SC, ES, SE, CE), usa-se essa
-   *    zona - de novo, fato geografico verificavel, nao suposicao.
+   *    zona - de novo, fato geográfico verificavel, nao suposicao.
    *  - Se o hemisferio nao e citado, mas o estado do imovel esta inteiramente
-   *    ao sul da Linha do Equador (fato geografico, nao suposicao), assume-se
+   *    ao sul da Linha do Equador (fato geográfico, nao suposicao), assume-se
    *    hemisferio Sul.
    * Qualquer valor preenchido aqui gera um alerta visivel, nunca fica silencioso.
    */
@@ -888,7 +888,7 @@
           sc.zona = zonaCalculada;
           doc.alertasIA.push(
             "Zona UTM " + zonaCalculada + " calculada a partir do Meridiano Central " + sc.meridiano_central +
-            " citado no documento (conversao matematica direta, nao e uma suposicao)."
+            " citado no documento (conversão matemática direta, não é uma suposição)."
           );
         }
       }
@@ -901,7 +901,7 @@
         sc.zona = UF_ZONA_UNICA[ufZona];
         doc.alertasIA.push(
           "Zona UTM " + sc.zona + " determinada a partir do estado (" + ufZona + ") citado no documento - " +
-          "esse estado esta inteiramente dentro dessa zona (fato geografico, nao e uma suposicao)."
+          "esse estado está inteiramente dentro dessa zona (fato geográfico, não é uma suposição)."
         );
       }
     }
@@ -912,7 +912,7 @@
       if (uf.length === 2 && UF_HEMISFERIO_INDETERMINADO.indexOf(uf) === -1) {
         sc.hemisferio = "S";
         doc.alertasIA.push(
-          "Hemisferio Sul assumido para o estado " + uf + " (nao explicitado no documento). Todo o territorio deste estado esta ao sul da Linha do Equador."
+          "Hemisfério Sul assumido para o estado " + uf + " (não explicitado no documento). Todo o território deste estado está ao sul da Linha do Equador."
         );
       }
     }
@@ -1046,7 +1046,7 @@
         nivel: "atencao",
         codigo: "SEM_POSICIONAMENTO_ABSOLUTO",
         mensagem:
-          "Poligonal reconstruida sem posicionamento geografico absoluto (nenhuma coordenada georreferenciada encontrada). O mapa nao sera exibido; apenas a forma e as medidas relativas."
+          "Poligonal reconstruída sem posicionamento geográfico absoluto (nenhuma coordenada georreferenciada encontrada). O mapa não será exibido; apenas a forma e as medidas relativas."
       });
     }
   }
@@ -1111,10 +1111,10 @@
       // o problema esta nos proprios vertices (easting/northing/lat-long nao
       // foram extraidos do documento para nenhum deles)
       alert(
-        "O sistema de coordenadas foi salvo, mas a matricula ainda nao pode ser posicionada no mapa: " +
-        "os proprios vertices desta analise nao tem coordenadas registradas (nao e so o datum/zona que faltava). " +
-        "Tente remover esta matricula do projeto (aba Projetos) e analisar o documento de novo - " +
-        "isso vai refazer a extracao e pode corrigir o problema."
+        "O sistema de coordenadas foi salvo, mas a matrícula ainda não pode ser posicionada no mapa: " +
+        "os próprios vértices desta análise não têm coordenadas registradas (não é só o datum/zona que faltava). " +
+        "Tente remover esta matrícula do projeto (aba Projetos) e analisar o documento de novo - " +
+        "isso vai refazer a extração e pode corrigir o problema."
       );
     }
   }
@@ -1148,25 +1148,25 @@
       return rank[v.nivel] > rank[acc] ? v.nivel : acc;
     }, "ok");
     var badgeClass = pior === "ok" ? "rs-badge--ok" : pior === "atencao" ? "rs-badge--warn" : "rs-badge--error";
-    var badgeText = pior === "ok" ? "✓ Poligonal valida" : pior === "atencao" ? "⚠ Atencao" : "✕ Erro geometrico";
+    var badgeText = pior === "ok" ? "✓ Poligonal válida" : pior === "atencao" ? "⚠ Atenção" : "✕ Erro geométrico";
 
     var html = "";
-    html += '<p class="rs-title">Resultado da analise</p>';
-    html += "<h2>" + esc(m.numero ? "Matricula " + m.numero : "Documento analisado") + "</h2>";
+    html += '<p class="rs-title">Resultado da análise</p>';
+    html += "<h2>" + esc(m.numero ? "Matrícula " + m.numero : "Documento analisado") + "</h2>";
 
     if (doc.situacaoMatricula && doc.situacaoMatricula.ativa === false) {
       html +=
-        '<div class="substituicao-banner">⚠ Esta matricula consta como substituida' +
-        (doc.situacaoMatricula.substituida_por ? " pela matricula <b>" + esc(doc.situacaoMatricula.substituida_por) + "</b>" : "") +
+        '<div class="substituicao-banner">⚠ Esta matrícula consta como substituída' +
+        (doc.situacaoMatricula.substituida_por ? " pela matrícula <b>" + esc(doc.situacaoMatricula.substituida_por) + "</b>" : "") +
         ".</div>";
     }
 
     html += '<div class="rs-grid">';
-    html += metricBlock("Vertices identificados", doc.vertices.length);
+    html += metricBlock("Vértices identificados", doc.vertices.length);
     html += metricBlock("Sistema", (doc.sistema.datum || "N/D") + (doc.sistema.zona ? " · UTM " + doc.sistema.zona + (doc.sistema.hemisferio || "") : ""));
-    html += metricBlock("Area registral", areaRegistral != null ? fmtArea(areaRegistral) : "N/D");
+    html += metricBlock("Área registral", areaRegistral != null ? fmtArea(areaRegistral) : "N/D");
     html += metricBlock(
-      "Area calculada",
+      "Área calculada",
       doc.areaCalculada != null ? fmtArea(doc.areaCalculada) : "N/D",
       cmp ? (cmp.diferenca < 0 ? "negative" : "positive") : ""
     );
@@ -1177,13 +1177,13 @@
         cmp.diferenca < 0 ? "negative" : "positive"
       );
     }
-    html += metricBlock("Perimetro calculado", doc.perimetroCalculado != null ? fmtLen(doc.perimetroCalculado) : "N/D");
+    html += metricBlock("Perímetro calculado", doc.perimetroCalculado != null ? fmtLen(doc.perimetroCalculado) : "N/D");
     html += "</div>";
     html += '<span class="rs-badge ' + badgeClass + '">' + badgeText + "</span>";
     html += '<div class="rs-actions">';
-    html += '<button class="btn btn-secondary" onclick="IntegralApp.goToView(\'dados-extraidos\')">Ver dados extraidos</button>';
+    html += '<button class="btn btn-secondary" onclick="IntegralApp.goToView(\'dados-extraidos\')">Ver dados extraídos</button>';
     html += '<button class="btn btn-secondary" onclick="IntegralApp.goToView(\'mapa\')">Ver mapa</button>';
-    html += '<button class="btn btn-secondary" onclick="IntegralApp.goToView(\'validacao\')">Ver validacao</button>';
+    html += '<button class="btn btn-secondary" onclick="IntegralApp.goToView(\'validacao\')">Ver validação</button>';
     html += '<button class="btn btn-primary" style="width:auto;margin:0" onclick="IntegralApp.goToView(\'exportacao\')">Exportar</button>';
     html += "</div>";
     el.innerHTML = html;
@@ -1240,7 +1240,7 @@
 
     if (!doc) {
       container.className = "empty-state";
-      container.innerHTML = 'Envie e analise um documento na aba "Nova analise" para ver os dados extraidos aqui.';
+      container.innerHTML = 'Envie e analise um documento na aba "Nova análise" para ver os dados extraídos aqui.';
       return;
     }
 
@@ -1257,20 +1257,20 @@
 
     var pior = piorNivel(doc.validacoes);
     var statusBadgeClass = pior === "ok" ? "rs-badge--ok" : pior === "atencao" ? "rs-badge--warn" : "rs-badge--error";
-    var statusBadgeText = pior === "ok" ? "✓ Poligonal valida" : pior === "atencao" ? "⚠ Atencao" : "✕ Erro geometrico";
+    var statusBadgeText = pior === "ok" ? "✓ Poligonal válida" : pior === "atencao" ? "⚠ Atenção" : "✕ Erro geométrico";
 
     html += '<div class="card doc-header-card">';
     html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
-    html += '<input type="color" id="doc-cor-picker" class="doc-cor-picker" value="' + esc(doc.cor) + '" title="Clique para escolher a cor desta matricula no mapa" />';
-    html += "<h2 style=\"margin:0;font-size:20px;\">Matricula " + esc(numero) + "</h2>";
+    html += '<input type="color" id="doc-cor-picker" class="doc-cor-picker" value="' + esc(doc.cor) + '" title="Clique para escolher a cor desta matrícula no mapa" />';
+    html += "<h2 style=\"margin:0;font-size:20px;\">Matrícula " + esc(numero) + "</h2>";
     html += doc.situacaoMatricula && doc.situacaoMatricula.ativa === false
-      ? '<span class="rs-badge rs-badge--warn">Substituida</span>'
+      ? '<span class="rs-badge rs-badge--warn">Substituída</span>'
       : '<span class="rs-badge rs-badge--ok">Ativa</span>';
     html += '<span class="rs-badge ' + statusBadgeClass + '">' + statusBadgeText + "</span>";
     html += "</div>";
     html += '<div class="rs-grid" style="margin-top:16px;">';
-    html += metricBlock("Area registral", areaRegistral != null ? fmtArea(areaRegistral, im.unidade_area) : "N/D");
-    html += metricBlock("Area calculada", doc.areaCalculada != null ? fmtArea(doc.areaCalculada) : "N/D", cmp ? (cmp.diferenca < 0 ? "negative" : "positive") : "");
+    html += metricBlock("Área registral", areaRegistral != null ? fmtArea(areaRegistral, im.unidade_area) : "N/D");
+    html += metricBlock("Área calculada", doc.areaCalculada != null ? fmtArea(doc.areaCalculada) : "N/D", cmp ? (cmp.diferenca < 0 ? "negative" : "positive") : "");
     if (cmp) {
       html += metricBlock(
         "Diferenca",
@@ -1278,16 +1278,16 @@
         cmp.diferenca < 0 ? "negative" : "positive"
       );
     }
-    html += metricBlock("Perimetro calculado", doc.perimetroCalculado != null ? fmtLen(doc.perimetroCalculado) : "N/D");
+    html += metricBlock("Perímetro calculado", doc.perimetroCalculado != null ? fmtLen(doc.perimetroCalculado) : "N/D");
     html += metricBlock("Vertices", doc.vertices.length);
     html += "</div></div>";
 
     if (doc.situacaoMatricula && doc.situacaoMatricula.ativa === false) {
       html +=
-        '<div class="substituicao-banner">⚠ O texto deste documento indica que esta matricula foi substituida' +
+        '<div class="substituicao-banner">⚠ O texto deste documento indica que esta matrícula foi substituída' +
         (doc.situacaoMatricula.substituida_por
-          ? " pela matricula <b>" + esc(doc.situacaoMatricula.substituida_por) + "</b>"
-          : " por outra matricula (numero nao identificado)") +
+          ? " pela matrícula <b>" + esc(doc.situacaoMatricula.substituida_por) + "</b>"
+          : " por outra matrícula (número não identificado)") +
         "." +
         (doc.situacaoMatricula.texto_origem ? '<br/><em>"' + esc(doc.situacaoMatricula.texto_origem) + '"</em>' : "") +
         "</div>";
@@ -1295,11 +1295,11 @@
 
     html += '<div class="data-grid">';
     html += panelTable("Matricula", [
-      ["Numero", m.numero], ["Cartorio", m.cartorio], ["Comarca", m.comarca], ["Municipio", m.municipio], ["UF", m.estado]
+      ["Número", m.numero], ["Cartório", m.cartorio], ["Comarca", m.comarca], ["Município", m.municipio], ["UF", m.estado]
     ]);
     html += panelTable("Proprietario", [["Nome", p.nome], ["CPF", p.cpf], ["CNPJ", p.cnpj]]);
     html += panelTable("Imovel", [
-      ["Area registral", areaRegistral != null ? fmtArea(areaRegistral, im.unidade_area) : null],
+      ["Área registral", areaRegistral != null ? fmtArea(areaRegistral, im.unidade_area) : null],
       ["Endereco", im.endereco], ["Lote", im.lote], ["Quadra", im.quadra]
     ]);
     var manualCampos = doc.sistemaManualCampos || {};
@@ -1308,14 +1308,14 @@
       ["Datum", sistemaValorComMarca(sc.datum, manualCampos.datum)],
       ["EPSG", sc.epsg],
       ["Zona", sistemaValorComMarca(sc.zona, manualCampos.zona)],
-      ["Hemisferio", sistemaValorComMarca(sc.hemisferio, manualCampos.hemisferio)],
-      ["Numero de vertices", doc.vertices.length]
+      ["Hemisfério", sistemaValorComMarca(sc.hemisferio, manualCampos.hemisferio)],
+      ["Número de vértices", doc.vertices.length]
     ]);
     html += "</div>";
 
     if (manualCampos.datum || manualCampos.zona || manualCampos.hemisferio) {
       html +=
-        '<p class="sistema-manual-nota">✎ Datum/zona/hemisferio marcados acima foram informados manualmente por voce - nao constam no documento original. ' +
+        '<p class="sistema-manual-nota">✎ Datum/zona/hemisfério marcados acima foram informados manualmente por você - não constam no documento original. ' +
         '<button class="btn-icon-text" id="btn-remover-sistema-manual" type="button">Remover e voltar ao original</button></p>';
     }
 
@@ -1340,15 +1340,15 @@
         var faltando = [];
         if (!doc.sistema.datum) faltando.push("datum");
         if (doc.sistema.zona == null) faltando.push("zona UTM");
-        if (!doc.sistema.hemisferio) faltando.push("hemisferio");
+        if (!doc.sistema.hemisferio) faltando.push("hemisfério");
         var temSugestao = doc.sugestaoGeografica && (doc.sugestaoGeografica.zona_utm_sugerida != null || doc.sugestaoGeografica.datum_sugerido);
         html +=
           '<div class="card sistema-manual-cta">' +
           "<h3>Sistema de coordenadas incompleto no documento</h3>" +
-          "<p>O documento nao informa " + esc(faltando.join(", ")) + " suficiente(s) para posicionar esta matricula no mapa. " +
+          "<p>O documento não informa " + esc(faltando.join(", ")) + " suficiente(s) para posicionar esta matrícula no mapa. " +
           (temSugestao
-            ? "A IA identificou o municipio/estado e tem uma sugestao para preencher (voce ainda precisa confirmar)."
-            : "Se voce souber essa informacao (pelo seu conhecimento profissional), pode informa-la manualmente.") +
+            ? "A IA identificou o município/estado e tem uma sugestão para preencher (você ainda precisa confirmar)."
+            : "Se você souber essa informação (pelo seu conhecimento profissional), pode informá-la manualmente.") +
           "</p>" +
           '<button class="btn btn-secondary btn-sm" id="btn-abrir-sistema-manual" type="button">Informar sistema de coordenadas</button>' +
           "</div>";
@@ -1356,9 +1356,9 @@
     }
 
 
-    html += '<div class="card evidence-list"><h3>Evidencia textual (auditoria)</h3>';
+    html += '<div class="card evidence-list"><h3>Evidência textual (auditoria)</h3>';
     if (doc.vertices.length === 0) {
-      html += '<p class="empty-state-inline">Nenhum vertice identificado.</p>';
+      html += '<p class="empty-state-inline">Nenhum vértice identificado.</p>';
     }
     doc.vertices.forEach(function (v) {
       var cls = confidenceClass(v.confianca);
@@ -1383,7 +1383,7 @@
     }
 
     if (doc.matriculasCitadas && doc.matriculasCitadas.length) {
-      html += '<div class="card"><h3>Matriculas citadas neste documento</h3><table class="data-table report-table"><tbody>';
+      html += '<div class="card"><h3>Matrículas citadas neste documento</h3><table class="data-table report-table"><tbody>';
       doc.matriculasCitadas.forEach(function (c) {
         html +=
           "<tr><td class=\"report-label\" style=\"width:auto;font-family:var(--font-mono);font-weight:700;\">" + esc(c.numero) + "</td>" +
@@ -1393,7 +1393,7 @@
     }
 
     if (doc.historicoRegistro && doc.historicoRegistro.length) {
-      html += '<div class="card"><h3>Historico de posse e transicao</h3>';
+      html += '<div class="card"><h3>Histórico de posse e transição</h3>';
       html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
       html += "<th>Ato</th><th>Data</th><th>Tipo</th><th>De</th><th>Para</th><th>Valor</th><th>Descricao</th>";
       html += "</tr></thead><tbody>";
@@ -1430,7 +1430,7 @@
     var btnRemoverSistema = document.getElementById("btn-remover-sistema-manual");
     if (btnRemoverSistema) {
       btnRemoverSistema.addEventListener("click", function () {
-        if (!confirm("Remover as informacoes de sistema de coordenadas que voce preencheu manualmente para esta matricula?")) return;
+        if (!confirm("Remover as informações de sistema de coordenadas que você preencheu manualmente para esta matrícula?")) return;
         removerSistemaManual(doc);
       });
     }
@@ -1463,7 +1463,7 @@
           return;
         }
         if (!zona || zona < 1 || zona > 60) {
-          alert("Informe uma zona UTM valida (numero de 1 a 60).");
+          alert("Informe uma zona UTM válida (número de 1 a 60).");
           return;
         }
         var camposAlterados = {
@@ -1485,8 +1485,8 @@
         var aindaLa = document.getElementById("btn-abrir-sistema-manual") || document.getElementById("btn-aplicar-sistema-manual");
         if (!aindaLa && getSelectedDocument() === doc) {
           console.warn(
-            "[INTEGRAL GEO MATRICULA] O botao de sistema de coordenadas foi renderizado mas desapareceu do DOM logo em seguida. " +
-            "Isso normalmente indica uma extensao do navegador (ex: Google Tradutor, leitor de pagina) reescrevendo o conteudo. " +
+            "[INTEGRAL GEO MATRÍCULA] O botão de sistema de coordenadas foi renderizado mas desapareceu do DOM logo em seguida. " +
+            "Isso normalmente indica uma extensão do navegador (ex: Google Tradutor, leitor de página) reescrevendo o conteúdo. " +
             "Tentando redesenhar uma vez..."
           );
           doc._tentouRedesenharSistemaManual = true;
@@ -1504,7 +1504,7 @@
       html +=
         '<tr><td class="report-label">' + esc(label) + "</td>" +
         '<td class="report-value' + (isNull ? " is-null" : "") + '">' +
-        (isNull ? "nao identificado" : esc(String(value))) +
+        (isNull ? "não identificado" : esc(String(value))) +
         "</td></tr>";
     });
     html += "</tbody></table></div>";
@@ -1523,7 +1523,7 @@
     var sc = doc.sistema || {};
     var sug = doc.sugestaoGeografica || {};
 
-    // prioridade de preenchimento: 1) ja resolvido (documento ou fato geografico), 2) sugestao da IA, 3) vazio
+    // prioridade de preenchimento: 1) ja resolvido (documento ou fato geográfico), 2) sugestao da IA, 3) vazio
     var zonaValor = sc.zona != null ? sc.zona : (sug.zona_utm_sugerida != null ? sug.zona_utm_sugerida : "");
     var datumValor = sc.datum != null ? sc.datum : (sug.datum_sugerido || "");
     var zonaVeioDeSugestao = sc.zona == null && sug.zona_utm_sugerida != null;
@@ -1532,26 +1532,26 @@
     var html = '<div class="card sistema-manual-form">';
     html += "<h3>Informar sistema de coordenadas manualmente</h3>";
     html +=
-      "<p>Campos ja deduzidos automaticamente (fato geografico, ex: zona/hemisferio pelo estado) vem preenchidos. " +
-      "O que voce preencher ou confirmar aqui ficara marcado como informado manualmente (nao extraido do documento) em todo o sistema.</p>";
+      "<p>Campos já deduzidos automaticamente (fato geográfico, ex: zona/hemisfério pelo estado) vêm preenchidos. " +
+      "O que você preencher ou confirmar aqui ficará marcado como informado manualmente (não extraído do documento) em todo o sistema.</p>";
 
     if (zonaVeioDeSugestao || datumVeioDeSugestao) {
       html +=
-        '<div class="sugestao-ia-box">⚠ <b>Sugestao da IA</b> - baseada na cidade/estado do imovel, NAO extraida do documento nem garantida geograficamente. ' +
+        '<div class="sugestao-ia-box">⚠ <b>Sugestão da IA</b> - baseada na cidade/estado do imóvel, NÃO extraída do documento nem garantida geograficamente. ' +
         "Confira antes de aplicar." +
         (sug.justificativa ? "<br/><em>" + esc(sug.justificativa) + "</em>" : "") +
         "</div>";
     }
 
     html += '<div class="form-row">';
-    html += '<label>Datum' + (datumVeioDeSugestao ? ' <span class="tag-sugestao-ia">sugestao IA</span>' : "") + '<select id="sm-datum"><option value="">Selecione...</option>' +
+    html += '<label>Datum' + (datumVeioDeSugestao ? ' <span class="tag-sugestao-ia">sugestão IA</span>' : "") + '<select id="sm-datum"><option value="">Selecione...</option>' +
       DATUMS_CONHECIDOS.map(function (d) {
         return '<option value="' + esc(d) + '"' + (datumValor === d ? " selected" : "") + '>' + esc(d) + "</option>";
       }).join("") +
       "</select></label>";
-    html += '<label>Zona UTM' + (zonaVeioDeSugestao ? ' <span class="tag-sugestao-ia">sugestao IA</span>' : "") +
+    html += '<label>Zona UTM' + (zonaVeioDeSugestao ? ' <span class="tag-sugestao-ia">sugestão IA</span>' : "") +
       '<input id="sm-zona" type="number" min="1" max="60" value="' + zonaValor + '" placeholder="ex: 22" /></label>';
-    html += '<label>Hemisferio<select id="sm-hemisferio">' +
+    html += '<label>Hemisfério<select id="sm-hemisferio">' +
       '<option value="S"' + (sc.hemisferio === "S" ? " selected" : "") + '>Sul</option>' +
       '<option value="N"' + (sc.hemisferio === "N" ? " selected" : "") + '>Norte</option>' +
       "</select></label>";
@@ -1649,11 +1649,11 @@
       var polygon = L.polygon(latlngs, { color: doc.cor, weight: 2.5, fillColor: doc.cor, fillOpacity: 0.16 }).addTo(state.map);
 
       var substituidaTxt = doc.situacaoMatricula && doc.situacaoMatricula.ativa === false
-        ? "<br/><b style='color:#c0362c'>Substituida" + (doc.situacaoMatricula.substituida_por ? " pela " + esc(doc.situacaoMatricula.substituida_por) : "") + "</b>"
+        ? "<br/><b style='color:#c0362c'>Substituída" + (doc.situacaoMatricula.substituida_por ? " pela " + esc(doc.situacaoMatricula.substituida_por) : "") + "</b>"
         : "";
       polygon.bindPopup(
         "<b>Matricula " + esc(numero) + "</b><br/>" +
-        "Area calculada: " + (doc.areaCalculada != null ? fmtArea(doc.areaCalculada) : "N/D") +
+        "Área calculada: " + (doc.areaCalculada != null ? fmtArea(doc.areaCalculada) : "N/D") +
         substituidaTxt
       );
       polygon.on("click", function () {
@@ -1673,7 +1673,7 @@
         var conf = vertex.confrontante_para_proximo || "N/D";
         marker.bindPopup(
           "<b>" + esc(numero) + " - " + esc(vertex.id) + "</b><br/>" +
-          "Distancia ao proximo: " + dist + "<br/>Azimute: " + esc(az) + "<br/>Confrontante: " + esc(conf)
+          "Distância ao próximo: " + dist + "<br/>Azimute: " + esc(az) + "<br/>Confrontante: " + esc(conf)
         );
         markersGroup.addLayer(marker);
       });
@@ -1695,8 +1695,8 @@
         document.getElementById("mapa-content").insertBefore(warn, document.getElementById("mapa-content").firstChild);
       }
       warn.innerHTML =
-        "<h3>Mapa indisponivel</h3><p>Nenhum documento deste projeto tem posicionamento geografico absoluto. A forma e as medidas estao disponiveis na tabela de vertices, mas nao sao exibidas no mapa para evitar posicionamento incorreto. " +
-        'Se o documento usa coordenadas UTM mas nao informa datum/zona/hemisferio, voce pode informar isso manualmente na aba "Dados extraidos".</p>';
+        "<h3>Mapa indisponível</h3><p>Nenhum documento deste projeto tem posicionamento geográfico absoluto. A forma e as medidas estão disponíveis na tabela de vértices, mas não são exibidas no mapa para evitar posicionamento incorreto. " +
+        'Se o documento usa coordenadas UTM mas não informa datum/zona/hemisfério, você pode informar isso manualmente na aba "Dados extraídos".</p>';
     } else {
       var existingWarn = document.getElementById("mapa-sem-posicionamento");
       if (existingWarn) existingWarn.remove();
@@ -1770,7 +1770,7 @@
         '<td><input data-field="azimute_para_proximo" data-idx="' + idx + '" type="text" value="' + (v.azimute_para_proximo ? esc(v.azimute_para_proximo) : "") + '" /></td>' +
         '<td><input data-field="confrontante_para_proximo" data-idx="' + idx + '" type="text" value="' + (v.confrontante_para_proximo ? esc(v.confrontante_para_proximo) : "") + '" /></td>' +
         '<td class="confidence-cell">' + Math.round((v.confianca || 0) * 100) + "%</td>" +
-        '<td><button class="row-delete" data-idx="' + idx + '" title="Remover vertice">✕</button></td>';
+        '<td><button class="row-delete" data-idx="' + idx + '" title="Remover vértice">✕</button></td>';
       tbody.appendChild(tr);
     });
 
@@ -1840,7 +1840,7 @@
   function initTableActions() {
     document.getElementById("btn-add-vertice").addEventListener("click", function () {
       var doc = getSelectedDocument();
-      if (!doc) { alert("Selecione ou analise uma matricula primeiro."); return; }
+      if (!doc) { alert("Selecione ou analise uma matrícula primeiro."); return; }
       var nextNum = doc.vertices.length + 1;
       doc.vertices.push({
         id: "V" + String(nextNum).padStart(2, "0"),
@@ -1862,7 +1862,7 @@
 
     if (!project || project.documentos.length === 0) {
       container.className = "empty-state";
-      container.innerHTML = 'Envie e analise um documento na aba "Nova analise" para ver as validacoes aqui.';
+      container.innerHTML = 'Envie e analise um documento na aba "Nova análise" para ver as validações aqui.';
       return;
     }
     container.className = "";
@@ -1884,7 +1884,7 @@
         all.unshift({
           nivel: "atencao",
           codigo: "MATRICULA_SUBSTITUIDA",
-          mensagem: "Esta matricula foi substituida" + (doc.situacaoMatricula.substituida_por ? " pela matricula " + doc.situacaoMatricula.substituida_por : "") + "."
+          mensagem: "Esta matrícula foi substituída" + (doc.situacaoMatricula.substituida_por ? " pela matrícula " + doc.situacaoMatricula.substituida_por : "") + "."
         });
       }
 
@@ -1893,7 +1893,7 @@
         all.unshift({
           nivel: "atencao",
           codigo: "SISTEMA_MANUAL",
-          mensagem: "O datum/zona/hemisferio desta matricula foi informado manualmente pelo usuario - nao consta no documento original. Confira antes de usar para fins oficiais."
+          mensagem: "O datum/zona/hemisfério desta matrícula foi informado manualmente pelo usuário - não consta no documento original. Confira antes de usar para fins oficiais."
         });
       }
 
@@ -1930,6 +1930,8 @@
   }
 
   function downloadBlob(content, filename, mime) {
+    // BOM UTF-8 em TXT/CSV para o Excel e o Bloco de Notas mostrarem os acentos
+    if (/^text\/(csv|plain)/.test(mime) && content.charAt(0) !== "\ufeff") content = "\ufeff" + content;
     var blob = new Blob([content], { type: mime });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
@@ -1954,13 +1956,13 @@
     document.getElementById("btn-export-geojson").addEventListener("click", function () {
       var doc = getSelectedDocument();
       if (!doc) return;
-      if (doc.semPosicionamentoAbsoluto) return alert("Exportacao indisponivel: poligonal sem posicionamento geografico absoluto.");
+      if (doc.semPosicionamentoAbsoluto) return alert("Exportação indisponível: poligonal sem posicionamento geográfico absoluto.");
       downloadBlob(JSON.stringify(IntegralExport.toGeoJSON(buildExportDataForDoc(doc)), null, 2), fileBaseNameForDoc(doc) + ".geojson", "application/geo+json");
     });
     document.getElementById("btn-export-kml").addEventListener("click", function () {
       var doc = getSelectedDocument();
       if (!doc) return;
-      if (doc.semPosicionamentoAbsoluto) return alert("Exportacao indisponivel: poligonal sem posicionamento geografico absoluto.");
+      if (doc.semPosicionamentoAbsoluto) return alert("Exportação indisponível: poligonal sem posicionamento geográfico absoluto.");
       downloadBlob(IntegralExport.toKML(buildExportDataForDoc(doc)), fileBaseNameForDoc(doc) + ".kml", "application/vnd.google-earth.kml+xml");
     });
     document.getElementById("btn-export-csv").addEventListener("click", function () {
@@ -2046,7 +2048,7 @@
         var norm2 = normalizarNumeroMatricula(d.situacaoMatricula.substituida_por);
         if (norm2 && !analisadas[norm2]) {
           if (!map[norm2]) map[norm2] = { numero: d.situacaoMatricula.substituida_por, contextos: [] };
-          map[norm2].contextos.push("substitui a matricula " + numeroAtual);
+          map[norm2].contextos.push("substitui a matrícula " + numeroAtual);
         }
       }
     });
@@ -2086,10 +2088,10 @@
 
     var docsList = document.getElementById("projeto-documentos-lista");
     if (!project || project.documentos.length === 0) {
-      docsList.innerHTML = '<p class="empty-state-inline">Nenhuma matricula neste projeto ainda.</p>';
+      docsList.innerHTML = '<p class="empty-state-inline">Nenhuma matrícula neste projeto ainda.</p>';
     } else {
       var html = '<table class="data-table"><thead><tr>' +
-        "<th>Matricula</th><th>Arquivo</th><th>Analisado em</th><th>Vertices</th><th>Status</th><th></th>" +
+        "<th>Matrícula</th><th>Arquivo</th><th>Analisado em</th><th>Vértices</th><th>Status</th><th></th>" +
         "</tr></thead><tbody>";
       project.documentos.forEach(function (doc) {
         var numero = (doc.extraido.matricula && doc.extraido.matricula.numero) || "s/n";
@@ -2123,7 +2125,7 @@
       });
       docsList.querySelectorAll("[data-remover-doc]").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          if (!confirm("Remover esta matricula do projeto?")) return;
+          if (!confirm("Remover esta matrícula do projeto?")) return;
           var id = btn.dataset.removerDoc;
           project.documentos = project.documentos.filter(function (d) { return d.id !== id; });
           project.atualizadoEm = new Date().toISOString();
@@ -2143,7 +2145,7 @@
       citEl.textContent = "Nenhuma pendencia identificada.";
     } else {
       citEl.className = "";
-      var h = '<table class="data-table"><thead><tr><th>Numero</th><th>Contexto</th></tr></thead><tbody>';
+      var h = '<table class="data-table"><thead><tr><th>Número</th><th>Contexto</th></tr></thead><tbody>';
       citadas.forEach(function (c) {
         h += "<tr><td class=\"mono\">" + esc(c.numero) + "</td><td>" + esc(c.contexto || "") + "</td></tr>";
       });
@@ -2200,7 +2202,7 @@
     document.getElementById("btn-excluir-projeto").addEventListener("click", function () {
       var project = getActiveProject();
       if (!project) return;
-      if (!confirm('Excluir o projeto "' + project.nome + '" e ' + project.documentos.length + ' matricula(s)? Essa acao nao pode ser desfeita.')) return;
+      if (!confirm('Excluir o projeto "' + project.nome + '" e ' + project.documentos.length + ' matricula(s)? Essa ação não pode ser desfeita.')) return;
       state.projetos = state.projetos.filter(function (p) { return p.id !== project.id; });
       state.projetoAtivoId = state.projetos.length ? state.projetos[0].id : null;
       state.documentoSelecionadoId = null;

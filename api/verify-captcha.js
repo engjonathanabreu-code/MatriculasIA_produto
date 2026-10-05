@@ -31,14 +31,14 @@ function sendJson(res, status, payload) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
-    return sendJson(res, 405, { sucesso: false, erro: "Metodo nao permitido." });
+    return sendJson(res, 405, { sucesso: false, erro: "Método não permitido." });
   }
 
   let usuario;
   try {
     usuario = await getAuthenticatedUser(req);
   } catch (e) {
-    return sendJson(res, 401, { sucesso: false, erro: "Faca login para continuar." });
+    return sendJson(res, 401, { sucesso: false, erro: "Faça login para continuar." });
   }
 
   const ip = getClientIp(req);
@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
     // antes de chamar a IA. Mantemos o alerta no log para corrigir a
     // configuracao do widget/hostname sem interromper os testes de usuarios.
     console.warn(
-      "[verify-captcha] Turnstile recusado para usuario autenticado; liberando lote em modo pre-lancamento.",
+      "[verify-captcha] Turnstile recusado para usuário autenticado; liberando lote em modo pre-lancamento.",
       { userId: usuario.id, hasToken: Boolean(token) }
     );
   }
@@ -75,7 +75,7 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     if (!err.statusCode) console.error("[verify-captcha] erro ao abrir lote:", err);
     return sendJson(res, err.statusCode || 500, Object.assign(
-      { sucesso: false, erro: err.statusCode ? err.message : "Nao foi possivel iniciar a analise." },
+      { sucesso: false, erro: err.statusCode ? err.message : "Não foi possível iniciar a análise." },
       err.extra || {}
     ));
   }

@@ -112,9 +112,9 @@
 
     var pontos = calcularForcaSenha(senha);
     var config;
-    if (pontos <= 2) config = { largura: "25%", cor: "var(--error)", texto: "Fraca - tente adicionar mais caracteres, numeros e simbolos" };
-    else if (pontos <= 3) config = { largura: "50%", cor: "#e08a1e", texto: "Razoavel - ja pode ser aceitavel, mas pode melhorar" };
-    else if (pontos <= 4) config = { largura: "75%", cor: "#2e7d32", texto: "Boa - senha aceitavel" };
+    if (pontos <= 2) config = { largura: "25%", cor: "var(--error)", texto: "Fraca - tente adicionar mais caracteres, números e símbolos" };
+    else if (pontos <= 3) config = { largura: "50%", cor: "#e08a1e", texto: "Razoável - já pode ser aceitável, mas pode melhorar" };
+    else if (pontos <= 4) config = { largura: "75%", cor: "#2e7d32", texto: "Boa - senha aceitável" };
     else config = { largura: "100%", cor: "var(--ok)", texto: "Forte - otima senha" };
 
     fill.style.width = config.largura;
@@ -196,17 +196,17 @@
           var telefone = document.getElementById("auth-telefone").value.trim();
 
           if (!cpfValido(cpf)) {
-            mostrarErroAuth("CPF invalido. Confira os numeros digitados.");
+            mostrarErroAuth("CPF inválido. Confira os números digitados.");
             btn.disabled = false;
             return;
           }
           if (telefone.replace(/\D/g, "").length < 10) {
-            mostrarErroAuth("Telefone invalido. Informe DDD + numero.");
+            mostrarErroAuth("Telefone inválido. Informe DDD + número.");
             btn.disabled = false;
             return;
           }
           if (!document.getElementById("auth-aceite-termos").checked) {
-            mostrarErroAuth("E preciso aceitar os Termos de Uso para criar a conta.");
+            mostrarErroAuth("É preciso aceitar os Termos de Uso para criar a conta.");
             btn.disabled = false;
             return;
           }
@@ -220,7 +220,7 @@
             options: optionsCadastro
           });
           if (error) throw error;
-          mostrarErroAuth("Conta criada! Se a confirmacao de e-mail estiver ativada, verifique sua caixa de entrada antes de entrar.");
+          mostrarErroAuth("Conta criada! Se a confirmação de e-mail estiver ativada, verifique sua caixa de entrada antes de entrar.");
         } else {
           var resp = await window.supabaseClient.auth.signInWithPassword({
             email: email,
@@ -233,8 +233,8 @@
         var msgTraduzida = traduzErroAuth(err && err.message ? err.message : String(err));
         if (msgTraduzida === "EMAIL_NAO_CONFIRMADO") {
           mostrarErroAuthComAcao(
-            "Este e-mail ainda nao foi confirmado.",
-            "Reenviar e-mail de confirmacao",
+            "Este e-mail ainda não foi confirmado.",
+            "Reenviar e-mail de confirmação",
             function () { reenviarConfirmacao(email); }
           );
         } else {
@@ -251,11 +251,11 @@
 
   function traduzErroAuth(msg) {
     if (/invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos.";
-    if (/user already registered/i.test(msg)) return "Ja existe uma conta com esse e-mail. Tente entrar.";
+    if (/user already registered/i.test(msg)) return "Já existe uma conta com esse e-mail. Tente entrar.";
     if (/password.*at least/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
     if (/email not confirmed/i.test(msg)) return "EMAIL_NAO_CONFIRMADO";
     if (/password.*(known|weak|easy to guess|pwned|compromised|breach)/i.test(msg)) {
-      return "Essa senha e conhecida por ja ter vazado em outros sites e nao e segura. Escolha uma senha diferente, de preferencia unica.";
+      return "Essa senha é conhecida por já ter vazado em outros sites e não é segura. Escolha uma senha diferente, de preferência única.";
     }
     return msg;
   }
@@ -263,9 +263,9 @@
   async function reenviarConfirmacao(email) {
     try {
       await window.supabaseClient.auth.resend({ type: "signup", email: email });
-      mostrarErroAuth("E-mail de confirmacao reenviado. Confira sua caixa de entrada (e o spam).");
+      mostrarErroAuth("E-mail de confirmação reenviado. Confira sua caixa de entrada (e o spam).");
     } catch (e) {
-      mostrarErroAuth("Nao foi possivel reenviar o e-mail: " + e.message);
+      mostrarErroAuth("Não foi possível reenviar o e-mail: " + e.message);
     }
   }
 
@@ -407,7 +407,7 @@
           var json = await chamarApiComAuth("/api/create-checkout-session", { planId: btn.dataset.assinarPlano });
           window.location.href = json.url;
         } catch (err) {
-          alert("Nao foi possivel iniciar a assinatura: " + err.message);
+          alert("Não foi possível iniciar a assinatura: " + err.message);
           btn.disabled = false;
         }
       });
@@ -419,7 +419,7 @@
         var json = await chamarApiComAuth("/api/create-portal-session", {});
         window.location.href = json.url;
       } catch (err) {
-        alert("Nao foi possivel abrir o portal de assinatura: " + err.message);
+        alert("Não foi possível abrir o portal de assinatura: " + err.message);
         this.disabled = false;
       }
     });
@@ -605,7 +605,7 @@
           chamarApiComAuth("/api/create-checkout-session", { planId: planoParaAssinar })
             .then(function (json) { window.location.href = json.url; })
             .catch(function (err) {
-              mostrarErroAuth("Nao foi possivel iniciar a assinatura do plano " + planoParaAssinar + ": " + err.message);
+              mostrarErroAuth("Não foi possível iniciar a assinatura do plano " + planoParaAssinar + ": " + err.message);
             });
         }
       } else {
