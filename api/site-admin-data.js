@@ -27,6 +27,26 @@ module.exports = async function handler(req, res) {
     const uniqueWeek = new Set(weekVisits.map(v => v.visitor_key).filter(Boolean)).size;
     const cadastros = regs.data || [];
 
+    // Situação de acesso de cada pré-cadastro: sem conta, conta própria ou Plano Testes
+    const emails = cadastros.map(c => String(c.email || "").toLowerCase()).filter(Boolean);
+    if (emails.length) {
+      const { data: perfis, error: ePerf } = await admin
+        .from("profiles")
+        .select("id,email,deve_trocar_senha,termos_aceitos_em,subscriptions(plan_id,status)")
+        .in("email", emails);
+      if (ePerf) throw ePerf;
+      const porEmail = new Map((perfis || []).map(p => [String(p.email).toLowerCase(), p]));
+      cadastros.forEach(c => {
+        const p = porEmail.get(String(c.email || "").toLowerCase());
+        if (!p) { c.acesso = "sem_conta"; return; }
+        const ativa = (p.subscriptions || []).find(x => x.status === "active");
+        c.acesso = ativa && ativa.plan_id === "testes"
+          ? (p.deve_trocar_senha || !p.termos_aceitos_em ? "teste_pendente" : "teste_ativo")
+          : "conta_propria";
+        c.plano = ativa ? ativa.plan_id : null;
+      });
+    }
+
     return res.status(200).json({
       sucesso: true,
       metricas: {

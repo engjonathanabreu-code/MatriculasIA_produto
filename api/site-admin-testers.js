@@ -120,6 +120,17 @@ async function criar(admin, body) {
     throw erro(409, "Já existem " + MAX_TESTERS + " usuários de teste ativos.");
   }
 
+  // Quem já tem conta (ex.: criou sozinho pelo app no teste gratuito) não
+  // ganha conta nova: a assinatura ativa sem Stripe é trocada pelo Plano
+  // Testes e a senha/aceite que a pessoa já tem continuam valendo.
+  const { data: perfilExistente, error: erroPerfil } = await admin
+    .from("profiles")
+    .select("id, telefone, nome_completo")
+    .eq("email", email)
+    .maybeSingle();
+  if (erroPerfil) throw erroPerfil;
+  if (perfilExistente) return converterContaExistente(admin, perfilExistente, whatsapp, nome, senha);
+
   // Cria a conta ja confirmada (sem e-mail de confirmacao). O trigger
   // handle_new_user cria o perfil e uma assinatura "trial"; logo abaixo a
   // assinatura e trocada para o Plano Testes.
@@ -163,7 +174,50 @@ async function criar(admin, body) {
     throw erro(500, "Não foi possível configurar o usuário de teste: " + (e.message || e));
   }
 
-  return { userId: userId, email: email, whatsapp: whatsapp };
+  return { userId: userId, email: email, whatsapp: whatsapp, existente: false };
+}
+
+async function converterContaExistente(admin, perfil, whatsapp, nome, senha) {
+  const { data: subs, error } = await admin
+    .from("subscriptions")
+    .select("id, plan_id, status, stripe_subscription_id")
+    .eq("user_id", perfil.id)
+    .in("status", ["active", "past_due", "trialing"]);
+  if (error) throw error;
+  if ((subs || []).some(function (x) { return x.stripe_subscription_id; })) {
+    throw erro(409, "Esta pessoa já é assinante de um plano pago.");
+  }
+  if ((subs || []).some(function (x) { return x.plan_id === PLANO_TESTES && x.status === "active"; })) {
+    throw erro(409, "Esta pessoa já está no Plano Testes.");
+  }
+  const agora = new Date().toISOString();
+  const { error: e1 } = await admin
+    .from("subscriptions")
+    .update({ status: "superseded", atualizado_em: agora })
+    .eq("user_id", perfil.id)
+    .eq("status", "active")
+    .is("stripe_subscription_id", null);
+  if (e1) throw e1;
+  const { error: e2 } = await admin
+    .from("subscriptions")
+    .insert({ user_id: perfil.id, plan_id: PLANO_TESTES, status: "active", periodo_inicio: agora });
+  if (e2) throw e2;
+  // Mesmo acesso dos demais testadores: e-mail + senha provisória, com troca
+  // obrigatória da senha no primeiro acesso.
+  const { data: atual, error: e3 } = await admin.auth.admin.getUserById(perfil.id);
+  if (e3 || !atual || !atual.user) throw erro(404, "Usuário não encontrado.");
+  const { error: e4 } = await admin.auth.admin.updateUserById(perfil.id, {
+    password: senha,
+    email_confirm: true,
+    app_metadata: Object.assign({}, atual.user.app_metadata || {}, { senha_provisoria_sha: hashSenhaProvisoria(perfil.id, senha) })
+  });
+  if (e4) throw erro(400, traduzErroAuth(e4.message));
+  const extra = { deve_trocar_senha: true };
+  if (!perfil.telefone && whatsapp) extra.telefone = whatsapp;
+  if (!perfil.nome_completo && nome) extra.nome_completo = nome;
+  const { error: e5 } = await admin.from("profiles").update(extra).eq("id", perfil.id);
+  if (e5) throw e5;
+  return { userId: perfil.id, whatsapp: perfil.telefone || whatsapp, existente: true };
 }
 
 async function redefinirSenha(admin, body) {
