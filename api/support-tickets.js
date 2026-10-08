@@ -1,3 +1,4 @@
+const { conversation } = require('../server/supportConversation');
 /**
  * api/support-tickets.js
  * ---------------------------------------------------------------------------
@@ -21,6 +22,8 @@ module.exports = async function handler(req, res) {
   try {
     const user = await getAuthenticatedUser(req);
     const admin = getSupabaseAdmin();
+
+    if ((req.method === 'GET' && req.query && req.query.id) || (req.method === 'POST' && bodyOf(req).ticketId)) return await conversation(req, res, admin, user.id);
 
     if (req.method === "GET") {
       const { data, error } = await admin

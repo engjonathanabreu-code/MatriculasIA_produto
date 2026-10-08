@@ -1,3 +1,4 @@
+const { conversation } = require('../server/supportConversation');
 /**
  * api/site-admin-tickets.js
  * ---------------------------------------------------------------------------
@@ -16,6 +17,8 @@ module.exports = async function handler(req, res) {
   try {
     await requireSiteAdmin(req);
     const admin = getSupabaseAdmin();
+
+    if ((req.method === 'GET' && req.query && req.query.id) || (req.method === 'POST' && true)) return await conversation(req, res, admin, null);
 
     if (req.method === "GET") {
       const { data, error } = await admin
