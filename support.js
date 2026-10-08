@@ -225,7 +225,9 @@
         return;
       }
       json.chamados.forEach(function (c) {
-        var row = document.createElement("div");
+        var thread = document.createElement("details");
+        thread.className = "support-thread";
+        var row = document.createElement("summary");
         row.className = "support-my-item";
         var title = document.createElement("span");
         title.className = "support-my-title";
@@ -238,7 +240,15 @@
         row.appendChild(title);
         row.appendChild(date);
         row.appendChild(badge("support-badge--" + c.status, STATUS[c.status] || c.status));
-        list.appendChild(row);
+        thread.appendChild(row);
+        var conversation = document.createElement('div'); thread.appendChild(conversation);
+        thread.addEventListener('toggle', function () {
+          if (thread.open && !thread.dataset.loaded) {
+            thread.dataset.loaded = 'true';
+            window.mountSupportConversation(conversation, '/api/support-tickets', token, c.id, true);
+          }
+        });
+        list.appendChild(thread);
       });
     } catch (err) {
       console.warn("[support] não foi possível carregar os chamados", err);

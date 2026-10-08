@@ -111,3 +111,13 @@
   .support-my-item{ flex-wrap: wrap; }
   .support-my-title{ flex-basis: 100%; }
 }
+
+.support-conversation {padding:12px 0; font-size:14px;}
+.support-conversation label {display:block;font-weight:600;}
+.support-conversation textarea {display:block;box-sizing:border-box;width:100%;margin:8px 0;padding:10px;font:inherit;border:1px solid #cbd5e1;border-radius:6px;}
+.support-conversation button {padding:8px 12px;margin:0 8px 0 0;cursor:pointer;}
+.support-message {padding:12px;margin-bottom:10px;border:1px solid #e2e8f0;border-radius:8px;}
+.support-message.suporte {background:#eff6ff;}
+.support-message p {white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;}
+.support-thread {border-bottom:1px solid #e2e8f0;}
+.support-thread summary {cursor:pointer;}
